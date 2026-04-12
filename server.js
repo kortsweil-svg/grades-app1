@@ -5,64 +5,65 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// --- Database setup ---
 const db = new Database('./grades.db');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS students (
-    id TEXT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    lookup_key TEXT NOT NULL UNIQUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
 
-// --- Middleware ---
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- API Routes ---
+function buildKey(fullName) {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length < 2) return null;
+  const first = parts[0];
+  const lastInitial = parts[parts.length - 1][0];
+  return `${first}.${lastInitial}`.toLowerCase();
+}
 
-// Get all students (teacher)
 app.get('/api/students', (req, res) => {
-  const rows = db.prepare('SELECT id, name, created_at FROM students ORDER BY created_at DESC').all();
+  const rows = db.prepare('SELECT id, name, lookup_key, created_at FROM students ORDER BY created_at DESC').all();
   res.json(rows);
 });
 
-// Add student
 app.post('/api/students', (req, res) => {
-  const { id, name } = req.body;
-  if (!id || !name) return res.status(400).json({ error: 'חסרים שדות' });
-  if (!/^\d{5,9}$/.test(id)) return res.status(400).json({ error: 'תז לא תקינה' });
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'חסר שם' });
+  const key = buildKey(name);
+  if (!key) return res.status(400).json({ error: 'נא להזין שם פרטי ושם משפחה' });
   try {
-    db.prepare('INSERT INTO students (id, name) VALUES (?, ?)').run(id.trim(), name.trim());
-    res.json({ ok: true });
+    db.prepare('INSERT INTO students (name, lookup_key) VALUES (?, ?)').run(name.trim(), key);
+    res.json({ ok: true, lookup_key: key });
   } catch (e) {
-    if (e.message.includes('UNIQUE')) return res.status(409).json({ error: 'תז זו כבר קיימת במערכת' });
+    if (e.message.includes('UNIQUE')) return res.status(409).json({ error: 'תלמיד עם שם זה כבר קיים' });
     res.status(500).json({ error: 'שגיאה בשרת' });
   }
 });
 
-// Delete student
 app.delete('/api/students/:id', (req, res) => {
   const result = db.prepare('DELETE FROM students WHERE id = ?').run(req.params.id);
   if (result.changes === 0) return res.status(404).json({ error: 'לא נמצא' });
   res.json({ ok: true });
 });
 
-// Delete all students
 app.delete('/api/students', (req, res) => {
   db.prepare('DELETE FROM students').run();
   res.json({ ok: true });
 });
 
-// Student lookup by ID
-app.get('/api/grade/:id', (req, res) => {
-  const row = db.prepare('SELECT id, name FROM students WHERE id = ?').get(req.params.id);
-  if (!row) return res.status(404).json({ error: 'לא נמצא תלמיד עם תז זו' });
+app.get('/api/grade/:key', (req, res) => {
+  const key = req.params.key.toLowerCase().trim();
+  const row = db.prepare('SELECT name FROM students WHERE lookup_key = ?').get(key);
+  if (!row) return res.status(404).json({ error: 'לא נמצא תלמיד — בדוק שם פרטי ואות ראשונה של שם משפחה' });
   res.json({ name: row.name, status: 'נכשל' });
 });
 
-// Serve pages
 app.get('/student', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
