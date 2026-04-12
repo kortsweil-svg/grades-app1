@@ -4,231 +4,259 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת ציונים — כניסה</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --green: #22c55e;
-  --green-dim: #16a34a;
-  --green-glow: rgba(34,197,94,0.15);
-  --green-border: rgba(34,197,94,0.3);
-  --bg: #0a0e0c;
-  --bg2: #111713;
-  --bg3: #161d18;
-  --surface: #1a2320;
-  --surface2: #1f2b25;
-  --border: rgba(255,255,255,0.07);
-  --border-green: rgba(34,197,94,0.2);
-  --text: #e8ede9;
-  --text-dim: #8a9e8d;
-  --text-muted: #4a5e4d;
-  --red: #f87171;
-  --red-bg: rgba(248,113,113,0.1);
+  --blue:#1E56B0; --blue-dark:#163E85; --blue-light:#2D6FD4;
+  --blue-pale:#EBF1FB; --blue-mid:#C7D9F5; --accent:#0EA5E9;
+  --white:#FFFFFF; --gray-50:#F8FAFC; --gray-100:#F1F5F9;
+  --gray-200:#E2E8F0; --gray-400:#94A3B8; --gray-500:#64748B;
+  --gray-600:#475569; --gray-800:#1E293B;
+  --red:#EF4444; --red-bg:#FEF2F2;
+  --green:#22C55E; --green-bg:#F0FDF4; --green-border:#BBF7D0;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'IBM Plex Sans Hebrew', sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family: 'Heebo', sans-serif;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Background grid */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(34,197,94,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(34,197,94,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-}
-
-/* Glow orb */
-body::after {
-  content: '';
-  position: fixed;
-  top: -200px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  padding: 1.25rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border);
-  background: rgba(10,14,12,0.8);
-  backdrop-filter: blur(12px);
-  z-index: 10;
-}
-.logo { display: flex; align-items: center; gap: 10px; }
-.logo-icon {
-  width: 32px; height: 32px;
-  background: var(--green);
-  border-radius: 8px;
+  background: linear-gradient(145deg, #EBF1FB 0%, #F8FAFC 50%, #E0EEFF 100%);
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px;
-}
-.logo-text { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
-.version { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-muted); background: var(--surface); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); }
-
-.container {
-  width: 100%;
-  max-width: 420px;
-  padding: 1.5rem;
+  padding: 1rem;
+  overflow: hidden;
   position: relative;
-  z-index: 1;
 }
+
+/* Decorative background shapes */
+.bg-shape {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.bg-shape-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(30,86,176,0.08) 0%, transparent 70%);
+  top: -150px; right: -150px;
+  animation: float1 8s ease-in-out infinite;
+}
+.bg-shape-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(14,165,233,0.07) 0%, transparent 70%);
+  bottom: -100px; left: -100px;
+  animation: float2 10s ease-in-out infinite;
+}
+.bg-shape-3 {
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(30,86,176,0.05) 0%, transparent 70%);
+  top: 50%; left: 10%;
+  animation: float3 12s ease-in-out infinite;
+}
+@keyframes float1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-20px,20px)} }
+@keyframes float2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-15px)} }
+@keyframes float3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(15px,15px)} }
+
+/* Floating icons */
+.float-icon {
+  position: fixed;
+  font-size: 32px;
+  opacity: 0.07;
+  pointer-events: none;
+  z-index: 0;
+  animation: floatIcon 6s ease-in-out infinite;
+}
+.fi-1 { top: 10%; left: 8%;  animation-delay: 0s;   font-size: 40px; }
+.fi-2 { top: 20%; left: 85%; animation-delay: 1s;   font-size: 28px; }
+.fi-3 { top: 60%; left: 5%;  animation-delay: 2s;   font-size: 36px; }
+.fi-4 { top: 75%; left: 80%; animation-delay: 3s;   font-size: 30px; }
+.fi-5 { top: 40%; left: 90%; animation-delay: 1.5s; font-size: 24px; }
+.fi-6 { top: 85%; left: 15%; animation-delay: 2.5s; font-size: 38px; }
+@keyframes floatIcon {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-18px) rotate(8deg); }
+}
+
+/* Main card */
+.wrapper {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 440px;
+  animation: slideUp .5s ease;
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
 
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border-green);
-  border-radius: 16px;
-  padding: 2.5rem;
-  position: relative;
-  overflow: hidden;
-}
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--green), transparent);
-  opacity: 0.5;
+  background: var(--white);
+  border-radius: 24px;
+  padding: 2.75rem;
+  box-shadow: 0 20px 60px rgba(30,86,176,0.14), 0 4px 16px rgba(0,0,0,0.06);
+  border: 1px solid rgba(30,86,176,0.08);
+  position: relative; overflow: hidden;
 }
 
-.card-tag {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--green);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-  opacity: 0.8;
+/* Top decoration */
+.card-deco {
+  position: absolute; top: 0; left: 0; right: 0; height: 6px;
+  background: linear-gradient(90deg, var(--blue-dark), var(--blue), var(--accent));
 }
-.card-title { font-size: 24px; font-weight: 600; color: var(--text); margin-bottom: 0.4rem; }
-.card-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 2rem; }
+
+/* Illustration */
+.illustration {
+  display: flex; justify-content: center; margin-bottom: 1.75rem;
+}
+.illus-wrap {
+  position: relative;
+  width: 100px; height: 100px;
+}
+.illus-circle-outer {
+  width: 100px; height: 100px;
+  background: linear-gradient(135deg, var(--blue-pale), #D4E8FF);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  animation: pulse 3s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30,86,176,0.15); }
+  50%      { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(30,86,176,0); }
+}
+.illus-circle-inner {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--blue), var(--blue-light));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 20px rgba(30,86,176,0.4);
+}
+.illus-emoji { font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+
+/* Badge top-right of illustration */
+.illus-badge {
+  position: absolute; top: -4px; right: -4px;
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #22C55E, #16A34A);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  border: 2px solid var(--white);
+  box-shadow: 0 2px 8px rgba(34,197,94,0.4);
+  animation: bounce 2s ease-in-out infinite;
+}
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+
+.card-title { font-size: 24px; font-weight: 700; color: var(--gray-800); text-align: center; margin-bottom: 0.4rem; }
+.card-sub { font-size: 14px; color: var(--gray-400); text-align: center; margin-bottom: 2rem; line-height: 1.6; }
+
+/* Features row */
+.features { display: flex; gap: 8px; margin-bottom: 2rem; }
+.feature {
+  flex: 1; background: var(--gray-50); border: 1px solid var(--gray-200);
+  border-radius: 10px; padding: 10px 8px; text-align: center;
+}
+.feature-icon { font-size: 18px; margin-bottom: 4px; }
+.feature-text { font-size: 11px; color: var(--gray-500); font-weight: 500; line-height: 1.3; }
 
 .field { margin-bottom: 1.25rem; }
-.field label {
-  display: block;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-dim);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
+.field label { display: block; font-size: 12px; font-weight: 700; color: var(--gray-600); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.06em; }
+.input-wrap { position: relative; }
+.input-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; }
 .field input {
-  width: 100%;
-  padding: 12px 16px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 15px;
-  font-family: 'IBM Plex Sans Hebrew', sans-serif;
-  transition: border-color .2s, box-shadow .2s;
-  outline: none;
-  direction: ltr;
-  text-align: right;
+  width: 100%; padding: 13px 42px 13px 16px;
+  border: 1.5px solid var(--gray-200); border-radius: 10px;
+  font-size: 15px; font-family: 'Heebo', sans-serif;
+  color: var(--gray-800); background: var(--gray-50);
+  transition: all .2s; outline: none;
 }
-.field input::placeholder { color: var(--text-muted); }
-.field input:focus {
-  border-color: var(--green-border);
-  box-shadow: 0 0 0 3px var(--green-glow);
-}
+.field input::placeholder { color: var(--gray-400); }
+.field input:focus { border-color: var(--blue); background: var(--white); box-shadow: 0 0 0 3px rgba(30,86,176,0.08); }
 
 .btn {
-  width: 100%;
-  padding: 13px;
-  background: var(--green);
-  color: #0a0e0c;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-  font-family: 'IBM Plex Sans Hebrew', sans-serif;
-  cursor: pointer;
-  transition: all .2s;
-  margin-top: 0.5rem;
-  position: relative;
-  overflow: hidden;
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--blue-dark), var(--blue), var(--blue-light));
+  color: var(--white); border: none; border-radius: 10px;
+  font-size: 16px; font-weight: 700; font-family: 'Heebo', sans-serif;
+  cursor: pointer; transition: all .2s; margin-top: 0.5rem;
+  box-shadow: 0 4px 16px rgba(30,86,176,0.35);
+  position: relative; overflow: hidden;
 }
 .btn::after {
   content: '';
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
   pointer-events: none;
 }
-.btn:hover { background: #16a34a; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.3); }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30,86,176,0.45); }
 .btn:active { transform: translateY(0); }
-.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn:disabled { opacity:.6; cursor:not-allowed; transform:none; box-shadow:none; }
 
 .msg { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; text-align: center; }
-.msg-err { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
-.msg-ok { background: var(--green-glow); color: var(--green); border: 1px solid var(--green-border); }
+.msg-err { background: var(--red-bg); color: var(--red); border: 1px solid #FECACA; }
+.msg-ok  { background: var(--green-bg); color: #16A34A; border: 1px solid var(--green-border); }
 
-.first-note {
-  background: rgba(234,179,8,0.08);
-  border: 1px solid rgba(234,179,8,0.2);
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 12px;
-  color: #fbbf24;
-  margin-bottom: 1.25rem;
-  text-align: center;
-  display: none;
-}
+.card-footer { margin-top: 1.5rem; text-align: center; font-size: 12px; color: var(--gray-400); display: flex; align-items: center; justify-content: center; gap: 6px; }
+.lock-icon { font-size: 13px; }
 
-.spinner {
-  display: inline-block; width: 16px; height: 16px;
-  border: 2px solid rgba(10,14,12,0.3); border-top-color: #0a0e0c;
-  border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle;
-}
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">
-    <div class="logo-icon">📋</div>
-    <span class="logo-text">מערכת ציונים</span>
-  </div>
-  <span class="version">v2.0</span>
-</header>
 
-<div class="container">
+<!-- Background shapes -->
+<div class="bg-shape bg-shape-1"></div>
+<div class="bg-shape bg-shape-2"></div>
+<div class="bg-shape bg-shape-3"></div>
+
+<!-- Floating school icons -->
+<div class="float-icon fi-1">📚</div>
+<div class="float-icon fi-2">✏️</div>
+<div class="float-icon fi-3">🎒</div>
+<div class="float-icon fi-4">📐</div>
+<div class="float-icon fi-5">🔬</div>
+<div class="float-icon fi-6">📖</div>
+
+<div class="wrapper">
   <div class="card">
-    <div class="card-tag">// teacher access</div>
+    <div class="card-deco"></div>
+
+    <div class="illustration">
+      <div class="illus-wrap">
+        <div class="illus-circle-outer">
+          <div class="illus-circle-inner">
+            <span class="illus-emoji">👩‍🏫</span>
+          </div>
+        </div>
+        <div class="illus-badge">🔐</div>
+      </div>
+    </div>
+
     <div class="card-title">כניסת מורה</div>
-    <div class="card-sub">הכנס פרטים לאימות זהות</div>
-    <div class="first-note" id="first-note">⭐ כניסה ראשונה — הפרטים שתזין ישמשו לכניסות הבאות</div>
+    <div class="card-sub">הכנס פרטי זיהוי כדי לגשת למערכת הניהול</div>
+
+    <div class="features">
+      <div class="feature"><div class="feature-icon">🛡️</div><div class="feature-text">כניסה מאובטחת</div></div>
+      <div class="feature"><div class="feature-icon">📊</div><div class="feature-text">ניהול ציונים</div></div>
+      <div class="feature"><div class="feature-icon">👥</div><div class="feature-text">ניהול תלמידים</div></div>
+    </div>
+
     <div class="field">
       <label>תעודת זהות</label>
-      <input type="text" id="id-number" placeholder="123456789" maxlength="9" inputmode="numeric" autocomplete="off">
+      <div class="input-wrap">
+        <span class="input-icon">🪪</span>
+        <input type="text" id="id-number" placeholder="123456789" maxlength="9" inputmode="numeric" autocomplete="off">
+      </div>
     </div>
     <div class="field">
       <label>טלפון סלולרי</label>
-      <input type="text" id="phone" placeholder="0501234567" maxlength="10" inputmode="numeric" autocomplete="off">
+      <div class="input-wrap">
+        <span class="input-icon">📱</span>
+        <input type="text" id="phone" placeholder="0501234567" maxlength="10" inputmode="numeric" autocomplete="off">
+      </div>
     </div>
-    <button class="btn" id="login-btn" onclick="login()">כניסה למערכת</button>
+
+    <button class="btn" id="login-btn" onclick="login()">כניסה למערכת ←</button>
     <div id="msg"></div>
+
+    <div class="card-footer">
+      <span class="lock-icon">🔒</span>
+      <span>הכניסה מוגנת ומאובטחת</span>
+    </div>
   </div>
 </div>
 
@@ -238,9 +266,7 @@ if (token) {
   fetch('/api/teacher/check', { headers: { 'x-session-token': token } })
     .then(r => r.json()).then(d => { if (d.valid) window.location.href = '/'; });
 }
-
 document.getElementById('phone').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
-
 async function login() {
   const id_number = document.getElementById('id-number').value.trim();
   const phone = document.getElementById('phone').value.trim();
@@ -263,7 +289,7 @@ async function login() {
   } catch(e) {
     msgEl.innerHTML = '<div class="msg msg-err">שגיאת רשת</div>';
   } finally {
-    btn.disabled = false; btn.textContent = 'כניסה למערכת';
+    btn.disabled = false; btn.textContent = 'כניסה למערכת ←';
   }
 }
 </script>
