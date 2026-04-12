@@ -9,7 +9,10 @@
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
 header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 header h1 { font-size: 18px; font-weight: 500; }
+.header-right { display: flex; align-items: center; gap: 10px; }
 .role-badge { background: #e8c84a; color: #1a1a2e; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.btn-logout { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); padding: 5px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: inherit; transition: background .15s; }
+.btn-logout:hover { background: rgba(255,255,255,.2); }
 .container { max-width: 740px; margin: 2rem auto; padding: 0 1rem; }
 .stats { display: flex; gap: 10px; margin-bottom: 1.25rem; }
 .stat { flex: 1; background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 1rem; text-align: center; }
@@ -17,7 +20,8 @@ header h1 { font-size: 18px; font-weight: 500; }
 .stat .lbl { font-size: 12px; color: #999; margin-top: 2px; }
 .card { background: #fff; border: 1px solid #e5e5e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
 .card h2 { font-size: 14px; font-weight: 600; color: #888; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: .05em; }
-.field { margin-bottom: 12px; }
+.row { display: flex; gap: 10px; align-items: flex-end; }
+.field { flex: 1; }
 .field label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; }
 .field input { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fafaf8; transition: border .15s; }
 .field input:focus { outline: none; border-color: #1a1a2e; background: #fff; }
@@ -37,8 +41,8 @@ th { text-align: right; padding: 8px 10px; color: #aaa; border-bottom: 1px solid
 td { padding: 11px 10px; border-bottom: 1px solid #f5f5f0; vertical-align: middle; }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: #fafaf8; }
-.badge-fail { background: #fee2e2; color: #991b1b; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
 .key-pill { background: #f0f0ec; color: #555; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-family: monospace; }
+.last3-pill { background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-family: monospace; }
 .del-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 15px; padding: 3px 7px; border-radius: 5px; transition: all .1s; }
 .del-btn:hover { color: #991b1b; background: #fee2e2; }
 .empty { text-align: center; color: #ccc; padding: 2.5rem 0; font-size: 13px; }
@@ -56,7 +60,10 @@ tr:hover td { background: #fafaf8; }
 <body>
 <header>
   <h1>📋 מערכת ציונים</h1>
-  <span class="role-badge">ממשק מורה</span>
+  <div class="header-right">
+    <span class="role-badge">ממשק מורה</span>
+    <button class="btn-logout" onclick="logout()">יציאה</button>
+  </div>
 </header>
 <div class="container">
   <div class="stats">
@@ -67,12 +74,18 @@ tr:hover td { background: #fafaf8; }
   </div>
   <div class="card">
     <h2>הוספת תלמיד</h2>
-    <div class="field">
-      <label>שם מלא (פרטי + משפחה)</label>
-      <input type="text" id="t-name" placeholder="ישראל ישראלי" autocomplete="off">
-      <div class="hint">התלמיד יכניס שם פרטי + נקודה + אות ראשונה של שם משפחה. לדוגמה: <strong>ישראל.י</strong></div>
+    <div class="row">
+      <div class="field">
+        <label>שם מלא (פרטי + משפחה)</label>
+        <input type="text" id="t-name" placeholder="ישראל ישראלי" autocomplete="off">
+        <div class="hint">מפתח כניסה: שם פרטי.אות ראשונה — למשל <strong>ישראל.י</strong></div>
+      </div>
+      <div class="field" style="max-width:140px">
+        <label>3 ספרות אחרונות של ת"ז</label>
+        <input type="text" id="t-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
+      </div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center">
+    <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
       <button class="btn btn-dark" id="add-btn" onclick="addStudent()">הוסף תלמיד</button>
     </div>
     <div id="msg"></div>
@@ -93,8 +106,17 @@ tr:hover td { background: #fafaf8; }
   </div>
 </div>
 <script>
+const token = sessionStorage.getItem('teacher_token');
+if (!token) window.location.href = '/login';
+
 document.getElementById('student-link').value = window.location.origin + '/student';
-document.getElementById('t-name').addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(); });
+
+// Verify session on load
+fetch('/api/teacher/check', { headers: { 'x-session-token': token } })
+  .then(r => r.json()).then(d => { if (!d.valid) window.location.href = '/login'; });
+
+function hdrs() { return { 'Content-Type': 'application/json', 'x-session-token': token }; }
+
 function copyLink() {
   navigator.clipboard.writeText(window.location.origin + '/student').then(() => {
     const btn = document.querySelector('.btn-copy');
@@ -102,20 +124,33 @@ function copyLink() {
     setTimeout(() => btn.textContent = 'העתק קישור', 2000);
   });
 }
+
+async function logout() {
+  await fetch('/api/teacher/logout', { method: 'POST', headers: hdrs() });
+  sessionStorage.removeItem('teacher_token');
+  window.location.href = '/login';
+}
+
 function showMsg(text, ok) {
   const el = document.getElementById('msg');
   el.innerHTML = `<div class="msg ${ok ? 'msg-ok' : 'msg-err'}">${text}</div>`;
   if (ok) setTimeout(() => el.innerHTML = '', 5000);
 }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.getElementById('t-name').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('t-last3').focus(); });
+document.getElementById('t-last3').addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(); });
+
 async function loadStudents() {
   try {
-    const students = await fetch('/api/students').then(r => r.json());
-    renderTable(students);
+    const res = await fetch('/api/students', { headers: hdrs() });
+    if (res.status === 401) { window.location.href = '/login'; return; }
+    renderTable(await res.json());
   } catch(e) {
     document.getElementById('table-wrap').innerHTML = '<div class="empty">שגיאה בטעינה</div>';
   }
 }
+
 function renderTable(students) {
   document.getElementById('count').textContent = students.length;
   document.getElementById('stat-total').textContent = students.length;
@@ -126,45 +161,54 @@ function renderTable(students) {
   }
   document.getElementById('table-wrap').innerHTML = `
     <table>
-      <thead><tr><th>שם מלא</th><th>מפתח כניסה</th><th>סטטוס</th><th></th></tr></thead>
+      <thead><tr><th>שם מלא</th><th>מפתח כניסה</th><th>3 ספרות אחרונות</th><th></th></tr></thead>
       <tbody>${students.map(s => `
         <tr>
           <td><strong>${esc(s.name)}</strong></td>
           <td><span class="key-pill">${esc(s.lookup_key)}</span></td>
-          <td><span class="badge-fail">נכשל</span></td>
+          <td><span class="last3-pill">***${esc(s.last3)}</span></td>
           <td><button class="del-btn" onclick="deleteStudent(${s.id},this)">✕</button></td>
         </tr>`).join('')}
       </tbody>
     </table>`;
 }
+
 async function addStudent() {
-  const name = document.getElementById('t-name').value.trim();
-  if (!name) return showMsg('נא להזין שם מלא');
-  if (name.trim().split(/\s+/).length < 2) return showMsg('נא להזין שם פרטי ושם משפחה');
+  const name  = document.getElementById('t-name').value.trim();
+  const last3 = document.getElementById('t-last3').value.trim();
+  if (!name)  return showMsg('נא להזין שם מלא');
+  if (name.split(/\s+/).length < 2) return showMsg('נא להזין שם פרטי ושם משפחה');
+  if (!/^\d{3}$/.test(last3)) return showMsg('נא להזין בדיוק 3 ספרות אחרונות של ת"ז');
+
   const btn = document.getElementById('add-btn');
   btn.disabled = true; btn.innerHTML = 'מוסיף... <span class="spinner"></span>';
   try {
-    const res = await fetch('/api/students', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name}) });
+    const res = await fetch('/api/students', { method: 'POST', headers: hdrs(), body: JSON.stringify({ name, last3 }) });
+    if (res.status === 401) { window.location.href = '/login'; return; }
     const data = await res.json();
     if (!res.ok) return showMsg(data.error || 'שגיאה');
     document.getElementById('t-name').value = '';
+    document.getElementById('t-last3').value = '';
     document.getElementById('t-name').focus();
-    showMsg(`נוסף בהצלחה! מפתח הכניסה: <strong>${data.lookup_key}</strong>`, true);
+    showMsg(`נוסף בהצלחה! מפתח כניסה: <strong>${data.lookup_key}</strong>`, true);
     loadStudents();
   } catch(e) { showMsg('שגיאת רשת'); }
   finally { btn.disabled = false; btn.textContent = 'הוסף תלמיד'; }
 }
+
 async function deleteStudent(id, el) {
-  if (!confirm('למחוק?')) return;
+  if (!confirm('למחוק תלמיד זה?')) return;
   el.disabled = true;
-  await fetch(`/api/students/${id}`, {method:'DELETE'});
+  await fetch(`/api/students/${id}`, { method: 'DELETE', headers: hdrs() });
   loadStudents();
 }
+
 async function clearAll() {
-  if (!confirm('למחוק הכל?')) return;
-  await fetch('/api/students', {method:'DELETE'});
+  if (!confirm('למחוק את כל התלמידים לצמיתות?')) return;
+  await fetch('/api/students', { method: 'DELETE', headers: hdrs() });
   loadStudents();
 }
+
 loadStudents();
 </script>
 </body>

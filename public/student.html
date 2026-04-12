@@ -16,9 +16,10 @@ header h1 { font-size: 18px; font-weight: 500; }
 .card-sub { font-size: 13px; color: #aaa; text-align: center; margin-bottom: 2rem; }
 .field { margin-bottom: 1rem; }
 .field label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500; }
-.field input { width: 100%; padding: 13px 16px; border: 2px solid #e5e5e0; border-radius: 10px; font-size: 18px; font-family: inherit; background: #fafaf8; text-align: center; transition: border .15s; }
+.field input { width: 100%; padding: 11px 14px; border: 2px solid #e5e5e0; border-radius: 10px; font-size: 17px; font-family: inherit; background: #fafaf8; text-align: center; transition: border .15s; }
 .field input:focus { outline: none; border-color: #1a1a2e; background: #fff; }
-.example { font-size: 12px; color: #bbb; text-align: center; margin-top: 6px; }
+.example { font-size: 12px; color: #bbb; text-align: center; margin-top: 5px; }
+.divider { height: 1px; background: #f0f0ec; margin: 1rem 0; }
 .btn { width: 100%; padding: 13px; background: #1a1a2e; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-family: inherit; font-weight: 700; cursor: pointer; transition: background .15s; }
 .btn:hover { background: #2d2d4e; }
 .btn:active { transform: scale(0.98); }
@@ -27,10 +28,12 @@ header h1 { font-size: 18px; font-weight: 500; }
 .msg-err { background: #fee2e2; color: #991b1b; }
 .result { margin-top: 1.75rem; padding-top: 1.75rem; border-top: 1px solid #f0f0ec; text-align: center; animation: fadeIn .3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.greeting { font-size: 15px; color: #888; margin-bottom: 1rem; }
+.greeting { font-size: 15px; color: #888; margin-bottom: 1.25rem; }
 .greeting strong { color: #1a1a2e; font-size: 17px; }
-.status-pill { display: inline-block; padding: 12px 36px; border-radius: 40px; font-size: 22px; font-weight: 700; background: #fee2e2; color: #991b1b; margin-bottom: 1rem; }
-.note { font-size: 12px; color: #bbb; }
+.status-box { background: #fff7ed; border: 2px solid #fed7aa; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.status-text { font-size: 15px; color: #92400e; line-height: 1.7; font-weight: 500; }
+.blessings { font-size: 16px; color: #1a1a2e; font-weight: 700; margin-top: 10px; }
+.note { font-size: 12px; color: #bbb; margin-top: 12px; }
 .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
@@ -43,42 +46,67 @@ header h1 { font-size: 18px; font-weight: 500; }
 <div class="container">
   <div class="card">
     <div class="card-title">בדיקת ציון</div>
-    <div class="card-sub">הכנס שם פרטי + נקודה + אות ראשונה של שם משפחה</div>
+    <div class="card-sub">הכנס את פרטיך לבדיקת הסטטוס</div>
+
     <div class="field">
       <label>מפתח כניסה</label>
       <input type="text" id="s-key" placeholder="ישראל.י" autocomplete="off" autocorrect="off" spellcheck="false">
-      <div class="example">דוגמה: ישראל ישראלי ← <strong>ישראל.י</strong></div>
+      <div class="example">שם פרטי + נקודה + אות ראשונה של שם משפחה</div>
     </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <label>3 ספרות אחרונות של ת"ז</label>
+      <input type="text" id="s-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
+    </div>
+
     <button class="btn" id="check-btn" onclick="lookup()">בדוק ציון</button>
     <div id="msg"></div>
     <div id="result"></div>
   </div>
 </div>
 <script>
-document.getElementById('s-key').addEventListener('keydown', e => { if (e.key === 'Enter') lookup(); });
+document.getElementById('s-key').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('s-last3').focus(); });
+document.getElementById('s-last3').addEventListener('keydown', e => { if (e.key === 'Enter') lookup(); });
+
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 async function lookup() {
-  const key = document.getElementById('s-key').value.trim();
+  const key   = document.getElementById('s-key').value.trim();
+  const last3 = document.getElementById('s-last3').value.trim();
   const msgEl = document.getElementById('msg');
   const resEl = document.getElementById('result');
   msgEl.innerHTML = ''; resEl.innerHTML = '';
+
   if (!key || !key.includes('.')) {
-    msgEl.innerHTML = '<div class="msg msg-err">נא להזין בפורמט: שם פרטי.אות — לדוגמה ישראל.י</div>';
+    msgEl.innerHTML = '<div class="msg msg-err">נא להזין מפתח כניסה בפורמט: שם.אות — למשל ישראל.י</div>';
     return;
   }
+  if (!/^\d{3}$/.test(last3)) {
+    msgEl.innerHTML = '<div class="msg msg-err">נא להזין בדיוק 3 ספרות אחרונות של ת"ז</div>';
+    return;
+  }
+
   const btn = document.getElementById('check-btn');
   btn.disabled = true; btn.innerHTML = 'בודק... <span class="spinner"></span>';
+
   try {
-    const res = await fetch(`/api/grade/${encodeURIComponent(key)}`);
+    const res = await fetch('/api/grade', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, last3 })
+    });
     const data = await res.json();
-    if (!res.ok) {
-      msgEl.innerHTML = `<div class="msg msg-err">${data.error || 'שגיאה'}</div>`;
-      return;
-    }
+    if (!res.ok) { msgEl.innerHTML = `<div class="msg msg-err">${data.error}</div>`; return; }
+
     resEl.innerHTML = `
       <div class="result">
         <div class="greeting">שלום, <strong>${esc(data.name)}</strong></div>
-        <div><span class="status-pill">נכשל</span></div>
+        <div class="status-box">
+          <div class="status-text">נכון לכרגע, אין לך ציון עובר.<br>עליך להשלים את המשימות השוטפות.</div>
+          <div class="blessings">בהצלחה! 💪</div>
+        </div>
         <div class="note">לפרטים נוספים פנה למורה</div>
       </div>`;
   } catch(e) {
