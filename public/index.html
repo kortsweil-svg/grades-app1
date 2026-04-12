@@ -3,122 +3,241 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>מערכת ציונים — מורה</title>
+<title>מערכת ציונים — ניהול</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+:root {
+  --green: #22c55e;
+  --green-dim: #16a34a;
+  --green-glow: rgba(34,197,94,0.12);
+  --green-border: rgba(34,197,94,0.25);
+  --bg: #0a0e0c;
+  --bg2: #0d1210;
+  --bg3: #111713;
+  --surface: #161d18;
+  --surface2: #1a2320;
+  --surface3: #1f2b25;
+  --border: rgba(255,255,255,0.06);
+  --border-md: rgba(255,255,255,0.1);
+  --text: #e8ede9;
+  --text-dim: #7a9a7d;
+  --text-muted: #3d5040;
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.08);
+  --red-border: rgba(248,113,113,0.2);
+  --amber: #fbbf24;
+  --amber-bg: rgba(251,191,36,0.08);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.08);
+  --blue-border: rgba(96,165,250,0.2);
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
-header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-header h1 { font-size: 18px; font-weight: 500; }
-.header-right { display: flex; align-items: center; gap: 10px; }
-.role-badge { background: #e8c84a; color: #1a1a2e; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-.btn-logout { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); padding: 5px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: inherit; transition: background .15s; }
-.btn-logout:hover { background: rgba(255,255,255,.2); }
-.container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-.stats { display: flex; gap: 10px; margin-bottom: 1.25rem; }
-.stat { flex: 1; background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 1rem; text-align: center; }
-.stat .num { font-size: 30px; font-weight: 700; color: #1a1a2e; }
-.stat .lbl { font-size: 12px; color: #999; margin-top: 2px; }
-.card { background: #fff; border: 1px solid #e5e5e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
-.card h2 { font-size: 14px; font-weight: 600; color: #888; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: .05em; }
-.row { display: flex; gap: 10px; align-items: flex-end; }
+body { font-family: 'IBM Plex Sans Hebrew', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(34,197,94,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,197,94,0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+header {
+  position: sticky; top: 0; z-index: 100;
+  padding: 0 2rem;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(10,14,12,0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.logo-text { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.logo-sep { color: var(--text-muted); margin: 0 8px; }
+.logo-sub { font-size: 13px; color: var(--text-dim); }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.badge-teacher { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var(--green-glow); color: var(--green); border: 1px solid var(--green-border); padding: 3px 10px; border-radius: 20px; }
+.btn-logout { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border-md); padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'IBM Plex Sans Hebrew', sans-serif; transition: all .15s; }
+.btn-logout:hover { color: var(--text); border-color: var(--border-md); background: var(--surface3); }
+
+.container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.stat::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--green); opacity: 0.3; }
+.stat .num { font-size: 32px; font-weight: 600; color: var(--green); font-family: 'IBM Plex Mono', monospace; }
+.stat .lbl { font-size: 12px; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.card-title { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Import zone */
+.import-zone {
+  border: 1px dashed rgba(34,197,94,0.25);
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all .2s;
+  cursor: pointer;
+}
+.import-zone:hover, .import-zone.dragover { border-color: var(--green); background: var(--green-glow); }
+.import-zone p { font-size: 14px; color: var(--text-dim); margin-bottom: 12px; }
+.import-note { font-size: 11px; color: var(--text-muted); margin-top: 10px; font-family: 'IBM Plex Mono', monospace; }
+
+/* Form */
+.form-row { display: flex; gap: 12px; align-items: flex-end; }
 .field { flex: 1; }
-.field label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; }
-.field input[type=text], .field input[type=number] { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fafaf8; transition: border .15s; }
-.field input:focus { outline: none; border-color: #1a1a2e; background: #fff; }
-.hint { font-size: 12px; color: #aaa; margin-top: 5px; }
-.btn { padding: 9px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-family: inherit; font-weight: 600; transition: all .15s; }
-.btn-dark { background: #1a1a2e; color: #fff; }
-.btn-dark:hover { background: #2d2d4e; }
-.btn-green { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-.btn-green:hover { background: #bbf7d0; }
-.btn-red { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-.btn-red:hover { background: #fecaca; }
+.field label { display: block; font-size: 11px; font-weight: 500; color: var(--text-dim); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.07em; }
+.field input {
+  width: 100%; padding: 10px 14px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 14px;
+  font-family: 'IBM Plex Sans Hebrew', sans-serif;
+  transition: border-color .15s, box-shadow .15s; outline: none;
+}
+.field input::placeholder { color: var(--text-muted); }
+.field input:focus { border-color: var(--green-border); box-shadow: 0 0 0 2px var(--green-glow); }
+.hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
+/* Buttons */
+.btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-family: 'IBM Plex Sans Hebrew', sans-serif; font-weight: 600; transition: all .15s; }
+.btn-primary { background: var(--green); color: #0a0e0c; }
+.btn-primary:hover { background: var(--green-dim); box-shadow: 0 4px 14px rgba(34,197,94,0.25); }
+.btn-ghost { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border-md); }
+.btn-ghost:hover { color: var(--text); background: var(--surface3); }
+.btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+.btn-danger:hover { background: rgba(248,113,113,0.15); }
+.btn-import { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid var(--green-border); }
+.btn-import:hover { background: var(--green-glow); }
 .btn:active { transform: scale(0.97); }
-.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-.msg { font-size: 13px; padding: 9px 12px; border-radius: 8px; margin-top: 10px; }
-.msg-ok { background: #dcfce7; color: #166534; }
-.msg-err { background: #fee2e2; color: #991b1b; }
-.msg-warn { background: #fefce8; color: #854d0e; }
+.btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+/* Messages */
+.msg { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; }
+.msg-ok { background: var(--green-glow); color: var(--green); border: 1px solid var(--green-border); }
+.msg-err { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+.msg-warn { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: right; padding: 8px 10px; color: #aaa; border-bottom: 1px solid #f0f0ec; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
-td { padding: 9px 10px; border-bottom: 1px solid #f5f5f0; vertical-align: middle; }
+th { text-align: right; padding: 10px 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; font-family: 'IBM Plex Mono', monospace; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: #fafaf8; }
-.key-pill { background: #f0f0ec; color: #555; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-family: monospace; }
-.last3-pill { background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-family: monospace; }
-.grade-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-.grade-pass { background: #dcfce7; color: #166534; }
-.grade-fail { background: #fee2e2; color: #991b1b; }
-.grade-none { background: #f5f5f0; color: #aaa; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+.pill { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
+.pill-key { background: var(--surface3); color: var(--text-dim); border: 1px solid var(--border-md); }
+.pill-id { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+.pill-grade-pass { background: var(--green-glow); color: var(--green); border: 1px solid var(--green-border); font-weight: 600; }
+.pill-grade-fail { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); font-weight: 600; }
+.pill-grade-none { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+
 .grade-edit { display: flex; align-items: center; gap: 6px; }
-.grade-input { width: 64px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-family: inherit; text-align: center; background: #fafaf8; }
-.grade-input:focus { outline: none; border-color: #1a1a2e; }
-.save-btn { padding: 5px 10px; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; }
-.save-btn:hover { background: #2d2d4e; }
-.del-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 15px; padding: 3px 7px; border-radius: 5px; transition: all .1s; }
-.del-btn:hover { color: #991b1b; background: #fee2e2; }
-.empty { text-align: center; color: #ccc; padding: 2.5rem 0; font-size: 13px; }
+.grade-input {
+  width: 60px; padding: 5px 8px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-size: 13px; text-align: center; outline: none;
+  font-family: 'IBM Plex Mono', monospace;
+  transition: border-color .15s;
+}
+.grade-input:focus { border-color: var(--green-border); }
+.save-btn {
+  padding: 5px 10px; background: var(--green-glow); color: var(--green);
+  border: 1px solid var(--green-border); border-radius: 6px;
+  font-size: 11px; font-weight: 600; cursor: pointer; transition: all .15s;
+  font-family: 'IBM Plex Sans Hebrew', sans-serif;
+}
+.save-btn:hover { background: rgba(34,197,94,0.2); }
+.del-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 14px; padding: 3px 7px; border-radius: 5px; transition: all .1s; }
+.del-btn:hover { color: var(--red); background: var(--red-bg); }
 
-/* Excel import area */
-.import-card { background: #fff; border: 2px dashed #d1d5db; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; transition: border-color .2s; }
-.import-card.dragover { border-color: #1a1a2e; background: #f8faff; }
-.import-card h2 { font-size: 14px; font-weight: 600; color: #888; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: .05em; }
-.import-drop { text-align: center; padding: 1rem 0; }
-.import-drop p { font-size: 14px; color: #aaa; margin-bottom: 12px; }
-.import-drop strong { color: #555; }
-.file-input { display: none; }
-.import-preview { margin-top: 1rem; }
-.preview-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
-.preview-table th { background: #f5f5f0; padding: 6px 10px; text-align: right; color: #888; font-weight: 600; border-bottom: 1px solid #eee; }
-.preview-table td { padding: 6px 10px; border-bottom: 1px solid #f5f5f0; }
+.empty { text-align: center; color: var(--text-muted); padding: 3rem 0; font-size: 13px; }
+
+/* Import preview */
+.preview-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+.preview-table th { background: var(--surface2); padding: 7px 10px; text-align: right; color: var(--text-dim); font-weight: 500; border-bottom: 1px solid var(--border); }
+.preview-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
 .preview-table tr:last-child td { border-bottom: none; }
-.row-ok { color: #166534; }
-.row-err { color: #991b1b; background: #fff5f5; }
-.import-summary { font-size: 13px; color: #555; margin-bottom: 10px; }
-.import-summary span { font-weight: 700; }
+.row-ok { color: var(--green); }
+.row-err { color: var(--red); background: var(--red-bg); }
+.import-summary { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
+.import-summary span { font-weight: 600; color: var(--text); }
 
-.link-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 1rem 1.25rem; }
-.link-box p { font-size: 13px; color: #1d4ed8; font-weight: 600; margin-bottom: 8px; }
+/* Link box */
+.link-box { background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 12px; padding: 1.25rem 1.5rem; }
+.link-label { font-size: 12px; color: var(--blue); font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'IBM Plex Mono', monospace; }
 .link-row { display: flex; gap: 8px; }
-.link-row input { flex: 1; background: #fff; border: 1px solid #bfdbfe; border-radius: 7px; padding: 8px 10px; font-size: 13px; color: #1e40af; direction: ltr; }
-.link-row input:focus { outline: none; }
-.btn-copy { background: #1d4ed8; color: #fff; padding: 8px 16px; border-radius: 7px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background .15s; }
-.btn-copy:hover { background: #1e40af; }
-.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #ddd; border-top-color: #1a1a2e; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-left: 6px; }
+.link-input { flex: 1; background: var(--bg3); border: 1px solid var(--blue-border); border-radius: 7px; padding: 9px 12px; font-size: 13px; color: var(--blue); direction: ltr; outline: none; font-family: 'IBM Plex Mono', monospace; }
+.btn-copy { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); padding: 9px 16px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'IBM Plex Sans Hebrew', sans-serif; transition: all .15s; }
+.btn-copy:hover { background: rgba(96,165,250,0.15); }
+
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(34,197,94,0.2); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.file-input { display: none; }
 </style>
 </head>
 <body>
 <header>
-  <h1>📋 מערכת ציונים</h1>
+  <div class="logo">
+    <div class="logo-icon">📋</div>
+    <span class="logo-text">מערכת ציונים</span>
+    <span class="logo-sep">/</span>
+    <span class="logo-sub">ניהול</span>
+  </div>
   <div class="header-right">
-    <span class="role-badge">ממשק מורה</span>
+    <span class="badge-teacher">TEACHER</span>
     <button class="btn-logout" onclick="logout()">יציאה</button>
   </div>
 </header>
+
 <div class="container">
   <div class="stats">
-    <div class="stat"><div class="num" id="stat-total">—</div><div class="lbl">תלמידים</div></div>
-    <div class="stat"><div class="num" id="stat-graded">—</div><div class="lbl">עם ציון</div></div>
-    <div class="stat"><div class="num" id="stat-pass">—</div><div class="lbl">עוברים (55+)</div></div>
+    <div class="stat"><div class="num" id="stat-total">0</div><div class="lbl">תלמידים</div></div>
+    <div class="stat"><div class="num" id="stat-graded">0</div><div class="lbl">עם ציון</div></div>
+    <div class="stat"><div class="num" id="stat-pass">0</div><div class="lbl">עוברים 55+</div></div>
   </div>
 
   <!-- Excel Import -->
-  <div class="import-card" id="import-card">
-    <h2>ייבוא מאקסל</h2>
-    <div class="import-drop" id="drop-zone">
-      <p>גרור קובץ אקסל לכאן, או</p>
-      <button class="btn btn-green" onclick="document.getElementById('file-input').click()">בחר קובץ אקסל</button>
-      <input type="file" id="file-input" class="file-input" accept=".xlsx,.xls,.csv">
-      <p style="margin-top:10px;font-size:12px;color:#bbb;">עמודות נדרשות: <strong>שם פרטי | שם משפחה | 3 ספרות ת"ז | ציון</strong></p>
+  <div class="card" id="import-card">
+    <div class="card-header">
+      <span class="card-title">// ייבוא מאקסל</span>
     </div>
-    <div class="import-preview" id="import-preview" style="display:none">
+    <div id="drop-zone" class="import-zone" onclick="document.getElementById('file-input').click()">
+      <p>גרור קובץ אקסל לכאן, או לחץ לבחירה</p>
+      <button class="btn btn-import" onclick="e => e.stopPropagation()">בחר קובץ xlsx</button>
+      <div class="import-note">עמודות: שם פרטי | שם משפחה | 3 ספרות ת"ז | ציון</div>
+    </div>
+    <input type="file" id="file-input" class="file-input" accept=".xlsx,.xls,.csv">
+    <div id="import-preview" style="display:none">
       <div class="import-summary" id="import-summary"></div>
       <div id="preview-table-wrap"></div>
-      <div style="display:flex;gap:10px;margin-top:12px">
-        <button class="btn btn-dark" id="confirm-import-btn" onclick="confirmImport()">ייבא תלמידים</button>
-        <button class="btn btn-red" onclick="cancelImport()">ביטול</button>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-primary" id="confirm-btn" onclick="confirmImport()">ייבא תלמידים</button>
+        <button class="btn btn-ghost" onclick="cancelImport()">ביטול</button>
       </div>
       <div id="import-msg"></div>
     </div>
@@ -126,42 +245,44 @@ tr:hover td { background: #fafaf8; }
 
   <!-- Manual add -->
   <div class="card">
-    <h2>הוספה ידנית</h2>
-    <div class="row">
+    <div class="card-header"><span class="card-title">// הוספה ידנית</span></div>
+    <div class="form-row">
       <div class="field">
-        <label>שם מלא (פרטי + משפחה)</label>
+        <label>שם מלא</label>
         <input type="text" id="t-name" placeholder="ישראל ישראלי" autocomplete="off">
-        <div class="hint">מפתח כניסה: שם.אות — למשל <strong>ישראל.י</strong></div>
+        <div class="hint">מפתח: שם.אות — למשל <strong style="color:var(--text)">ישראל.י</strong></div>
       </div>
       <div class="field" style="max-width:140px">
-        <label>3 ספרות אחרונות ת"ז</label>
+        <label>3 ספרות ת"ז</label>
         <input type="text" id="t-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
       </div>
       <div class="field" style="max-width:100px">
-        <label>ציון (0–100)</label>
+        <label>ציון</label>
         <input type="number" id="t-grade" placeholder="—" min="0" max="100" autocomplete="off">
       </div>
     </div>
-    <div style="display:flex;gap:10px;margin-top:12px">
-      <button class="btn btn-dark" id="add-btn" onclick="addStudent()">הוסף תלמיד</button>
+    <div style="margin-top:14px">
+      <button class="btn btn-primary" id="add-btn" onclick="addStudent()">הוסף תלמיד</button>
     </div>
     <div id="msg"></div>
   </div>
 
   <!-- Students table -->
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <h2 style="margin:0">רשימת תלמידים (<span id="count">0</span>)</h2>
-      <button class="btn btn-red" id="clear-btn" onclick="clearAll()" style="display:none;font-size:12px;padding:6px 14px">מחק הכל</button>
+    <div class="card-header">
+      <span class="card-title">// תלמידים (<span id="count">0</span>)</span>
+      <button class="btn btn-danger" id="clear-btn" onclick="clearAll()" style="display:none;font-size:12px;padding:6px 14px">מחק הכל</button>
     </div>
-    <div id="table-wrap"><div class="empty">טוען... <span class="spinner"></span></div></div>
+    <div class="table-wrap" id="table-wrap">
+      <div class="empty"><span class="spinner"></span> טוען...</div>
+    </div>
   </div>
 
   <div class="link-box">
-    <p>🔗 קישור לתלמידים</p>
+    <div class="link-label">// קישור לתלמידים</div>
     <div class="link-row">
-      <input type="text" id="student-link" readonly>
-      <button class="btn-copy" onclick="copyLink()">העתק קישור</button>
+      <input type="text" class="link-input" id="student-link" readonly>
+      <button class="btn-copy" onclick="copyLink()">העתק</button>
     </div>
   </div>
 </div>
@@ -169,101 +290,57 @@ tr:hover td { background: #fafaf8; }
 <script>
 const token = sessionStorage.getItem('teacher_token');
 if (!token) window.location.href = '/login';
-
 document.getElementById('student-link').value = window.location.origin + '/student';
-
 fetch('/api/teacher/check', { headers: { 'x-session-token': token } })
   .then(r => r.json()).then(d => { if (!d.valid) window.location.href = '/login'; });
 
 function hdrs() { return { 'Content-Type': 'application/json', 'x-session-token': token }; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── Excel import ──────────────────────────────────────────────
+// ── Drag & drop ───────────────────────────────────────────────
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+document.getElementById('file-input').addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
 let parsedRows = [];
-
-const dropZone = document.getElementById('drop-zone');
-const importCard = document.getElementById('import-card');
-
-dropZone.addEventListener('dragover', e => { e.preventDefault(); importCard.classList.add('dragover'); });
-dropZone.addEventListener('dragleave', () => importCard.classList.remove('dragover'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  importCard.classList.remove('dragover');
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
-});
-
-document.getElementById('file-input').addEventListener('change', e => {
-  if (e.target.files[0]) handleFile(e.target.files[0]);
-});
-
 function handleFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     const wb = XLSX.read(e.target.result, { type: 'array' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-
-    // Skip header row if first cell looks like text header
-    let dataRows = raw;
-    if (raw.length > 0) {
-      const first = String(raw[0][0] || '').trim();
-      if (isNaN(first) && first !== '') dataRows = raw.slice(1);
-    }
-
-    parsedRows = dataRows
-      .filter(r => r.some(c => String(c).trim() !== ''))
-      .map((r, i) => {
-        const firstName = String(r[0] || '').trim();
-        const lastName  = String(r[1] || '').trim();
-        const last3raw  = String(r[2] || '').trim().replace(/\D/g, '').slice(-3);
-        const gradeRaw  = String(r[3] || '').trim();
-        const grade     = gradeRaw === '' ? null : parseInt(gradeRaw);
-
-        const errors = [];
-        if (!firstName)              errors.push('חסר שם פרטי');
-        if (!lastName)               errors.push('חסר שם משפחה');
-        if (!/^\d{3}$/.test(last3raw)) errors.push('3 ספרות ת"ז שגויות');
-        if (gradeRaw !== '' && (isNaN(grade) || grade < 0 || grade > 100)) errors.push('ציון לא תקין');
-
-        const name = firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName;
-        const key = firstName && lastName
-          ? `${firstName}.${lastName[0]}`.toLowerCase()
-          : '';
-
-        return { firstName, lastName, name, last3: last3raw, grade, key, errors, rowNum: i + 2 };
-      });
-
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
+    let rows = raw;
+    if (raw.length && isNaN(String(raw[0][0]).trim()) && String(raw[0][0]).trim()) rows = raw.slice(1);
+    parsedRows = rows.filter(r => r.some(c => String(c).trim())).map((r, i) => {
+      const fn = String(r[0]||'').trim(), ln = String(r[1]||'').trim();
+      const l3 = String(r[2]||'').trim().replace(/\D/g,'').slice(-3);
+      const gv = String(r[3]||'').trim();
+      const g = gv === '' ? null : parseInt(gv);
+      const errors = [];
+      if (!fn) errors.push('חסר שם פרטי');
+      if (!ln) errors.push('חסר שם משפחה');
+      if (!/^\d{3}$/.test(l3)) errors.push('3 ספרות שגויות');
+      if (gv && (isNaN(g)||g<0||g>100)) errors.push('ציון לא תקין');
+      return { name: fn&&ln?`${fn} ${ln}`:fn||ln, last3: l3, grade: g, key: fn&&ln?`${fn}.${ln[0]}`.toLowerCase():'', errors, row: i+2 };
+    });
     showPreview();
   };
   reader.readAsArrayBuffer(file);
 }
 
 function showPreview() {
-  const valid   = parsedRows.filter(r => r.errors.length === 0);
-  const invalid = parsedRows.filter(r => r.errors.length > 0);
-
+  const valid = parsedRows.filter(r => !r.errors.length);
+  const bad = parsedRows.filter(r => r.errors.length);
   document.getElementById('import-summary').innerHTML =
-    `נמצאו <span>${parsedRows.length}</span> שורות — ` +
-    `<span style="color:#166534">${valid.length} תקינות</span>` +
-    (invalid.length ? `, <span style="color:#991b1b">${invalid.length} עם שגיאות</span>` : '');
-
-  const rows = parsedRows.slice(0, 20).map(r => `
-    <tr class="${r.errors.length ? 'row-err' : 'row-ok'}">
-      <td>${r.rowNum}</td>
-      <td>${esc(r.name)}</td>
-      <td>${esc(r.last3)}</td>
-      <td>${r.grade !== null ? r.grade : '—'}</td>
-      <td>${r.errors.length ? r.errors.join(', ') : '✓'}</td>
-    </tr>`).join('');
-
+    `<span>${parsedRows.length}</span> שורות — <span style="color:var(--green)">${valid.length} תקינות</span>${bad.length?`, <span style="color:var(--red)">${bad.length} שגיאות</span>`:''}`;
   document.getElementById('preview-table-wrap').innerHTML = `
-    <table class="preview-table">
-      <thead><tr><th>#</th><th>שם</th><th>3 ספרות</th><th>ציון</th><th>סטטוס</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    ${parsedRows.length > 20 ? `<p style="font-size:12px;color:#aaa;margin-top:6px">מוצגות 20 שורות ראשונות מתוך ${parsedRows.length}</p>` : ''}`;
-
-  document.getElementById('confirm-import-btn').disabled = valid.length === 0;
+    <table class="preview-table"><thead><tr><th>#</th><th>שם</th><th>3 ספרות</th><th>ציון</th><th>סטטוס</th></tr></thead>
+    <tbody>${parsedRows.slice(0,20).map(r=>`<tr class="${r.errors.length?'row-err':'row-ok'}">
+      <td>${r.row}</td><td>${esc(r.name)}</td><td>${esc(r.last3)}</td><td>${r.grade??'—'}</td>
+      <td>${r.errors.length?r.errors.join(', '):'✓'}</td></tr>`).join('')}</tbody></table>
+    ${parsedRows.length>20?`<p style="font-size:11px;color:var(--text-muted);margin-top:6px">מוצגות 20 מתוך ${parsedRows.length}</p>`:''}`;
+  document.getElementById('confirm-btn').disabled = !valid.length;
   document.getElementById('import-preview').style.display = 'block';
   document.getElementById('drop-zone').style.display = 'none';
 }
@@ -277,182 +354,141 @@ function cancelImport() {
 }
 
 async function confirmImport() {
-  const valid = parsedRows.filter(r => r.errors.length === 0);
-  const btn = document.getElementById('confirm-import-btn');
-  btn.disabled = true;
-  btn.innerHTML = `מייבא ${valid.length} תלמידים... <span class="spinner"></span>`;
-
-  let added = 0, skipped = 0, errors = 0;
-
+  const valid = parsedRows.filter(r => !r.errors.length);
+  const btn = document.getElementById('confirm-btn');
+  btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> מייבא ${valid.length}...`;
+  let added=0, skipped=0;
   for (const s of valid) {
     try {
-      const res = await fetch('/api/students', {
-        method: 'POST', headers: hdrs(),
-        body: JSON.stringify({ name: s.name, last3: s.last3 })
-      });
+      const res = await fetch('/api/students', { method:'POST', headers:hdrs(), body:JSON.stringify({name:s.name,last3:s.last3}) });
       const data = await res.json();
       if (!res.ok) { skipped++; continue; }
-
-      // Save grade if exists
       if (s.grade !== null) {
-        const allRes = await fetch('/api/students', { headers: hdrs() });
-        const all = await allRes.json();
-        const newS = all.find(x => x.lookup_key === data.lookup_key);
-        if (newS) {
-          await fetch(`/api/students/${newS.id}/grade`, {
-            method: 'PATCH', headers: hdrs(),
-            body: JSON.stringify({ grade: s.grade })
-          });
-        }
+        const all = await fetch('/api/students',{headers:hdrs()}).then(r=>r.json());
+        const ns = all.find(x=>x.lookup_key===data.lookup_key);
+        if (ns) await fetch(`/api/students/${ns.id}/grade`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({grade:s.grade})});
       }
       added++;
-    } catch(e) { errors++; }
+    } catch(e) { skipped++; }
   }
-
-  const msgEl = document.getElementById('import-msg');
-  msgEl.innerHTML = `<div class="msg ${errors ? 'msg-warn' : 'msg-ok'}">
-    ✓ יובאו ${added} תלמידים${skipped ? ` | ${skipped} כבר קיימים` : ''}${errors ? ` | ${errors} שגיאות` : ''}
-  </div>`;
-
-  btn.disabled = false;
-  btn.textContent = 'ייבא תלמידים';
+  document.getElementById('import-msg').innerHTML = `<div class="msg msg-ok">✓ יובאו ${added} תלמידים${skipped?` | ${skipped} דולגו`:''}</div>`;
+  btn.disabled = false; btn.textContent = 'ייבא תלמידים';
   loadStudents();
-  setTimeout(() => cancelImport(), 3000);
+  setTimeout(cancelImport, 3000);
 }
 
-// ── Helpers ───────────────────────────────────────────────────
+// ── CRUD ──────────────────────────────────────────────────────
 function copyLink() {
-  navigator.clipboard.writeText(window.location.origin + '/student').then(() => {
-    const btn = document.querySelector('.btn-copy');
-    btn.textContent = '✓ הועתק!';
-    setTimeout(() => btn.textContent = 'העתק קישור', 2000);
+  navigator.clipboard.writeText(window.location.origin+'/student').then(()=>{
+    const b=document.querySelector('.btn-copy'); b.textContent='✓ הועתק!';
+    setTimeout(()=>b.textContent='העתק',2000);
   });
 }
 
 async function logout() {
-  await fetch('/api/teacher/logout', { method: 'POST', headers: hdrs() });
+  await fetch('/api/teacher/logout',{method:'POST',headers:hdrs()});
   sessionStorage.removeItem('teacher_token');
-  window.location.href = '/login';
+  window.location.href='/login';
 }
 
-function showMsg(text, ok) {
-  const el = document.getElementById('msg');
-  el.innerHTML = `<div class="msg ${ok ? 'msg-ok' : 'msg-err'}">${text}</div>`;
-  if (ok) setTimeout(() => el.innerHTML = '', 5000);
+function showMsg(text,ok) {
+  const el=document.getElementById('msg');
+  el.innerHTML=`<div class="msg ${ok?'msg-ok':'msg-err'}">${text}</div>`;
+  if(ok) setTimeout(()=>el.innerHTML='',5000);
 }
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-document.getElementById('t-name').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('t-last3').focus(); });
-document.getElementById('t-last3').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('t-grade').focus(); });
-document.getElementById('t-grade').addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(); });
+document.getElementById('t-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('t-last3').focus();});
+document.getElementById('t-last3').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('t-grade').focus();});
+document.getElementById('t-grade').addEventListener('keydown',e=>{if(e.key==='Enter')addStudent();});
 
 async function loadStudents() {
   try {
-    const res = await fetch('/api/students', { headers: hdrs() });
-    if (res.status === 401) { window.location.href = '/login'; return; }
+    const res=await fetch('/api/students',{headers:hdrs()});
+    if(res.status===401){window.location.href='/login';return;}
     renderTable(await res.json());
-  } catch(e) {
-    document.getElementById('table-wrap').innerHTML = '<div class="empty">שגיאה בטעינה</div>';
-  }
+  } catch(e) { document.getElementById('table-wrap').innerHTML='<div class="empty">שגיאה בטעינה</div>'; }
 }
 
-function gradeBadge(grade) {
-  if (grade === null || grade === undefined) return '<span class="grade-badge grade-none">—</span>';
-  if (grade >= 55) return `<span class="grade-badge grade-pass">${grade}</span>`;
-  return `<span class="grade-badge grade-fail">${grade}</span>`;
+function gradePill(g) {
+  if(g===null||g===undefined) return '<span class="pill pill-grade-none">—</span>';
+  if(g>=55) return `<span class="pill pill-grade-pass">${g}</span>`;
+  return `<span class="pill pill-grade-fail">${g}</span>`;
 }
 
 function renderTable(students) {
-  document.getElementById('count').textContent = students.length;
-  document.getElementById('stat-total').textContent = students.length;
-  const graded = students.filter(s => s.grade !== null && s.grade !== undefined);
-  document.getElementById('stat-graded').textContent = graded.length;
-  document.getElementById('stat-pass').textContent = graded.filter(s => s.grade >= 55).length;
-  document.getElementById('clear-btn').style.display = students.length ? 'inline-block' : 'none';
-  if (!students.length) {
-    document.getElementById('table-wrap').innerHTML = '<div class="empty">אין תלמידים עדיין</div>';
-    return;
-  }
-  document.getElementById('table-wrap').innerHTML = `
-    <table>
-      <thead><tr><th>שם מלא</th><th>מפתח</th><th>ת"ז (3 אחרונות)</th><th>ציון</th><th>עדכון ציון</th><th></th></tr></thead>
-      <tbody>${students.map(s => `
-        <tr>
-          <td><strong>${esc(s.name)}</strong></td>
-          <td><span class="key-pill">${esc(s.lookup_key)}</span></td>
-          <td><span class="last3-pill">***${esc(s.last3)}</span></td>
-          <td id="grade-display-${s.id}">${gradeBadge(s.grade)}</td>
-          <td>
-            <div class="grade-edit">
-              <input class="grade-input" type="number" id="grade-input-${s.id}" min="0" max="100" value="${s.grade !== null && s.grade !== undefined ? s.grade : ''}" placeholder="0–100">
-              <button class="save-btn" onclick="saveGrade(${s.id})">שמור</button>
-            </div>
-          </td>
-          <td><button class="del-btn" onclick="deleteStudent(${s.id},this)">✕</button></td>
-        </tr>`).join('')}
-      </tbody>
-    </table>`;
+  document.getElementById('count').textContent=students.length;
+  document.getElementById('stat-total').textContent=students.length;
+  const gr=students.filter(s=>s.grade!==null&&s.grade!==undefined);
+  document.getElementById('stat-graded').textContent=gr.length;
+  document.getElementById('stat-pass').textContent=gr.filter(s=>s.grade>=55).length;
+  document.getElementById('clear-btn').style.display=students.length?'inline-block':'none';
+  if(!students.length){document.getElementById('table-wrap').innerHTML='<div class="empty">אין תלמידים עדיין</div>';return;}
+  document.getElementById('table-wrap').innerHTML=`
+    <table><thead><tr><th>שם</th><th>מפתח</th><th>ת"ז</th><th>ציון</th><th>עדכון</th><th></th></tr></thead>
+    <tbody>${students.map(s=>`<tr>
+      <td><strong>${esc(s.name)}</strong></td>
+      <td><span class="pill pill-key">${esc(s.lookup_key)}</span></td>
+      <td><span class="pill pill-id">***${esc(s.last3)}</span></td>
+      <td id="gd-${s.id}">${gradePill(s.grade)}</td>
+      <td><div class="grade-edit">
+        <input class="grade-input" type="number" id="gi-${s.id}" min="0" max="100" value="${s.grade??''}" placeholder="—">
+        <button class="save-btn" onclick="saveGrade(${s.id})">שמור</button>
+      </div></td>
+      <td><button class="del-btn" onclick="del(${s.id},this)">✕</button></td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
 async function addStudent() {
-  const name  = document.getElementById('t-name').value.trim();
-  const last3 = document.getElementById('t-last3').value.trim();
-  const gradeVal = document.getElementById('t-grade').value.trim();
-  if (!name) return showMsg('נא להזין שם מלא');
-  if (name.split(/\s+/).length < 2) return showMsg('נא להזין שם פרטי ושם משפחה');
-  if (!/^\d{3}$/.test(last3)) return showMsg('נא להזין בדיוק 3 ספרות אחרונות של ת"ז');
-  if (gradeVal !== '' && (isNaN(gradeVal) || +gradeVal < 0 || +gradeVal > 100)) return showMsg('ציון חייב להיות בין 0 ל-100');
-
-  const btn = document.getElementById('add-btn');
-  btn.disabled = true; btn.innerHTML = 'מוסיף... <span class="spinner"></span>';
+  const name=document.getElementById('t-name').value.trim();
+  const last3=document.getElementById('t-last3').value.trim();
+  const gv=document.getElementById('t-grade').value.trim();
+  if(!name) return showMsg('נא להזין שם מלא');
+  if(name.split(/\s+/).length<2) return showMsg('נא להזין שם פרטי ושם משפחה');
+  if(!/^\d{3}$/.test(last3)) return showMsg('נא להזין 3 ספרות ת"ז');
+  if(gv&&(isNaN(gv)||+gv<0||+gv>100)) return showMsg('ציון בין 0–100');
+  const btn=document.getElementById('add-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> מוסיף...';
   try {
-    const res = await fetch('/api/students', { method: 'POST', headers: hdrs(), body: JSON.stringify({ name, last3 }) });
-    if (res.status === 401) { window.location.href = '/login'; return; }
-    const data = await res.json();
-    if (!res.ok) return showMsg(data.error || 'שגיאה');
-    if (gradeVal !== '') {
-      const allRes = await fetch('/api/students', { headers: hdrs() });
-      const all = await allRes.json();
-      const newStudent = all.find(s => s.lookup_key === data.lookup_key);
-      if (newStudent) await fetch(`/api/students/${newStudent.id}/grade`, { method: 'PATCH', headers: hdrs(), body: JSON.stringify({ grade: +gradeVal }) });
+    const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name,last3})});
+    if(res.status===401){window.location.href='/login';return;}
+    const data=await res.json();
+    if(!res.ok) return showMsg(data.error||'שגיאה');
+    if(gv) {
+      const all=await fetch('/api/students',{headers:hdrs()}).then(r=>r.json());
+      const ns=all.find(s=>s.lookup_key===data.lookup_key);
+      if(ns) await fetch(`/api/students/${ns.id}/grade`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({grade:+gv})});
     }
-    document.getElementById('t-name').value = '';
-    document.getElementById('t-last3').value = '';
-    document.getElementById('t-grade').value = '';
+    document.getElementById('t-name').value='';
+    document.getElementById('t-last3').value='';
+    document.getElementById('t-grade').value='';
     document.getElementById('t-name').focus();
-    showMsg(`נוסף בהצלחה! מפתח: <strong>${data.lookup_key}</strong>`, true);
+    showMsg(`נוסף! מפתח: <strong>${data.lookup_key}</strong>`,true);
     loadStudents();
-  } catch(e) { showMsg('שגיאת רשת'); }
-  finally { btn.disabled = false; btn.textContent = 'הוסף תלמיד'; }
+  } catch(e){showMsg('שגיאת רשת');}
+  finally{btn.disabled=false;btn.textContent='הוסף תלמיד';}
 }
 
 async function saveGrade(id) {
-  const input = document.getElementById(`grade-input-${id}`);
-  const val = input.value.trim();
-  const grade = val === '' ? null : parseInt(val);
-  if (val !== '' && (isNaN(grade) || grade < 0 || grade > 100)) {
-    input.style.borderColor = '#ef4444';
-    setTimeout(() => input.style.borderColor = '', 2000);
-    return;
-  }
-  try {
-    await fetch(`/api/students/${id}/grade`, { method: 'PATCH', headers: hdrs(), body: JSON.stringify({ grade: val === '' ? '' : grade }) });
-    document.getElementById(`grade-display-${id}`).innerHTML = gradeBadge(grade);
-    input.style.borderColor = '#22c55e';
-    setTimeout(() => { input.style.borderColor = ''; loadStudents(); }, 800);
-  } catch(e) {}
+  const input=document.getElementById(`gi-${id}`);
+  const val=input.value.trim();
+  const g=val===''?null:parseInt(val);
+  if(val&&(isNaN(g)||g<0||g>100)){input.style.borderColor='var(--red)';setTimeout(()=>input.style.borderColor='',2000);return;}
+  await fetch(`/api/students/${id}/grade`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({grade:val===''?'':g})});
+  document.getElementById(`gd-${id}`).innerHTML=gradePill(g);
+  input.style.borderColor='var(--green)';
+  setTimeout(()=>{input.style.borderColor='';loadStudents();},800);
 }
 
-async function deleteStudent(id, el) {
-  if (!confirm('למחוק תלמיד זה?')) return;
-  el.disabled = true;
-  await fetch(`/api/students/${id}`, { method: 'DELETE', headers: hdrs() });
+async function del(id,el) {
+  if(!confirm('למחוק?')) return;
+  el.disabled=true;
+  await fetch(`/api/students/${id}`,{method:'DELETE',headers:hdrs()});
   loadStudents();
 }
 
 async function clearAll() {
-  if (!confirm('למחוק את כל התלמידים לצמיתות?')) return;
-  await fetch('/api/students', { method: 'DELETE', headers: hdrs() });
+  if(!confirm('למחוק הכל לצמיתות?')) return;
+  await fetch('/api/students',{method:'DELETE',headers:hdrs()});
   loadStudents();
 }
 

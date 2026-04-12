@@ -4,115 +4,256 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת ציונים — בדיקת ציון</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+:root {
+  --green: #22c55e;
+  --green-dim: #16a34a;
+  --green-glow: rgba(34,197,94,0.12);
+  --green-border: rgba(34,197,94,0.3);
+  --bg: #0a0e0c;
+  --bg3: #111713;
+  --surface: #161d18;
+  --surface2: #1a2320;
+  --border: rgba(255,255,255,0.06);
+  --border-md: rgba(255,255,255,0.1);
+  --text: #e8ede9;
+  --text-dim: #7a9a7d;
+  --text-muted: #3d5040;
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.08);
+  --red-border: rgba(248,113,113,0.2);
+  --amber: #fbbf24;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
-header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
-header h1 { font-size: 18px; font-weight: 500; }
-.role-badge { background: #a5f3fc; color: #0e7490; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-.container { max-width: 420px; margin: 4rem auto; padding: 0 1rem; }
-.card { background: #fff; border: 1px solid #e5e5e0; border-radius: 16px; padding: 2rem; }
-.card-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 0.4rem; }
-.card-sub { font-size: 13px; color: #aaa; text-align: center; margin-bottom: 2rem; }
-.field { margin-bottom: 1rem; }
-.field label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500; }
-.field input { width: 100%; padding: 11px 14px; border: 2px solid #e5e5e0; border-radius: 10px; font-size: 17px; font-family: inherit; background: #fafaf8; text-align: center; transition: border .15s; }
-.field input:focus { outline: none; border-color: #1a1a2e; background: #fff; }
-.example { font-size: 12px; color: #bbb; text-align: center; margin-top: 5px; }
-.divider { height: 1px; background: #f0f0ec; margin: 1rem 0; }
-.btn { width: 100%; padding: 13px; background: #1a1a2e; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-family: inherit; font-weight: 700; cursor: pointer; transition: background .15s; }
-.btn:hover { background: #2d2d4e; }
-.btn:active { transform: scale(0.98); }
-.btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+body {
+  font-family: 'IBM Plex Sans Hebrew', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(34,197,94,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,197,94,0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -100px; left: 50%; transform: translateX(-50%);
+  width: 500px; height: 400px;
+  background: radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+header {
+  position: sticky; top: 0; z-index: 10;
+  height: 60px; padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(10,14,12,0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.logo-text { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.badge-student { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border-md); padding: 3px 10px; border-radius: 20px; }
+
+.main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; position: relative; z-index: 1; }
+.container { width: 100%; max-width: 420px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-md);
+  border-radius: 18px;
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34,197,94,0.4), transparent);
+}
+
+.card-tag { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--green); opacity: 0.7; letter-spacing: 0.1em; margin-bottom: 1rem; }
+.card-title { font-size: 22px; font-weight: 600; margin-bottom: 0.3rem; }
+.card-sub { font-size: 13px; color: var(--text-dim); margin-bottom: 2rem; }
+
+.field { margin-bottom: 1.25rem; }
+.field label { display: block; font-size: 11px; font-weight: 500; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.07em; }
+.field input {
+  width: 100%; padding: 13px 16px;
+  background: var(--bg3); border: 1px solid var(--border-md);
+  border-radius: 10px; color: var(--text);
+  font-size: 18px; font-family: 'IBM Plex Mono', monospace;
+  text-align: center; letter-spacing: 2px;
+  transition: border-color .15s, box-shadow .15s; outline: none;
+}
+.field input::placeholder { color: var(--text-muted); letter-spacing: 0; font-size: 15px; }
+.field input:focus { border-color: var(--green-border); box-shadow: 0 0 0 3px var(--green-glow); }
+
+.divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+.btn {
+  width: 100%; padding: 14px;
+  background: var(--green); color: #0a0e0c;
+  border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 600; font-family: 'IBM Plex Sans Hebrew', sans-serif;
+  cursor: pointer; transition: all .2s;
+  position: relative; overflow: hidden;
+}
+.btn::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg,rgba(255,255,255,0.08),transparent); pointer-events: none; }
+.btn:hover { background: var(--green-dim); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.3); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
 .msg { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; text-align: center; }
-.msg-err { background: #fee2e2; color: #991b1b; }
-.result { margin-top: 1.75rem; padding-top: 1.75rem; border-top: 1px solid #f0f0ec; text-align: center; animation: fadeIn .3s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.greeting { font-size: 15px; color: #888; margin-bottom: 1.25rem; }
-.greeting strong { color: #1a1a2e; font-size: 17px; }
-.status-box { background: #fff7ed; border: 2px solid #fed7aa; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
-.status-text { font-size: 15px; color: #92400e; line-height: 1.7; font-weight: 500; }
-.blessings { font-size: 16px; color: #1a1a2e; font-weight: 700; margin-top: 10px; }
-.note { font-size: 12px; color: #bbb; margin-top: 12px; }
-.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
+.msg-err { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+
+/* Result */
+.result { margin-top: 2rem; animation: fadeUp .35s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+
+.greeting { text-align: center; font-size: 14px; color: var(--text-dim); margin-bottom: 1.5rem; }
+.greeting strong { color: var(--text); font-size: 18px; display: block; margin-top: 4px; }
+
+.grade-display {
+  text-align: center;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+.grade-number {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 72px; font-weight: 600; line-height: 1;
+  margin-bottom: 6px;
+}
+.grade-pass { color: var(--green); text-shadow: 0 0 30px rgba(34,197,94,0.4); }
+.grade-fail { color: var(--red); text-shadow: 0 0 30px rgba(248,113,113,0.3); }
+.grade-lbl { font-size: 12px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.1em; }
+
+.status-box { border-radius: 12px; padding: 1.25rem; text-align: center; }
+.status-box.pass { background: var(--green-glow); border: 1px solid var(--green-border); }
+.status-box.fail { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2); }
+.status-box.no-grade { background: var(--surface2); border: 1px solid var(--border-md); }
+.status-text { font-size: 14px; line-height: 1.7; }
+.status-text.pass { color: var(--green); }
+.status-text.fail { color: var(--amber); }
+.status-text.no-grade { color: var(--text-dim); }
+.status-emoji { font-size: 24px; margin-top: 10px; display: block; }
+
+.footer-note { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 1.5rem; font-family: 'IBM Plex Mono', monospace; }
+
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(10,14,12,0.2); border-top-color: #0a0e0c; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <header>
-  <h1>📋 מערכת ציונים</h1>
-  <span class="role-badge">תלמיד</span>
-</header>
-<div class="container">
-  <div class="card">
-    <div class="card-title">בדיקת ציון</div>
-    <div class="card-sub">הכנס את פרטיך לבדיקת הסטטוס</div>
-
-    <div class="field">
-      <label>מפתח כניסה</label>
-      <input type="text" id="s-key" placeholder="ישראל.י" autocomplete="off" autocorrect="off" spellcheck="false">
-      <div class="example">שם פרטי + נקודה + אות ראשונה של שם משפחה</div>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="field">
-      <label>3 ספרות אחרונות של ת"ז</label>
-      <input type="text" id="s-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
-    </div>
-
-    <button class="btn" id="check-btn" onclick="lookup()">בדוק ציון</button>
-    <div id="msg"></div>
-    <div id="result"></div>
+  <div class="logo">
+    <div class="logo-icon">📋</div>
+    <span class="logo-text">מערכת ציונים</span>
   </div>
-</div>
+  <span class="badge-student">STUDENT</span>
+</header>
+
+<main class="main">
+  <div class="container">
+    <div class="card">
+      <div class="card-tag">// grade lookup</div>
+      <div class="card-title">בדיקת ציון</div>
+      <div class="card-sub">הכנס את פרטיך לצפייה בסטטוס</div>
+
+      <div class="field">
+        <label>מפתח כניסה</label>
+        <input type="text" id="s-key" placeholder="ישראל.י" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>3 ספרות אחרונות ת"ז</label>
+        <input type="text" id="s-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
+      </div>
+
+      <button class="btn" id="check-btn" onclick="lookup()">בדוק ציון</button>
+      <div id="msg"></div>
+      <div id="result"></div>
+    </div>
+  </div>
+</main>
+
 <script>
-document.getElementById('s-key').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('s-last3').focus(); });
-document.getElementById('s-last3').addEventListener('keydown', e => { if (e.key === 'Enter') lookup(); });
+document.getElementById('s-key').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('s-last3').focus(); });
+document.getElementById('s-last3').addEventListener('keydown', e => { if(e.key==='Enter') lookup(); });
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+function buildResult(name, grade) {
+  const has = grade !== null && grade !== undefined;
+  const passing = has && grade >= 55;
+
+  const gradeHtml = has ? `
+    <div class="grade-display">
+      <div class="grade-number ${passing?'grade-pass':'grade-fail'}">${grade}</div>
+      <div class="grade-lbl">ציון נוכחי / 100</div>
+    </div>` : '';
+
+  let statusHtml = '';
+  if (passing) {
+    statusHtml = `<div class="status-box pass">
+      <div class="status-text pass">הציון שלך עובר — כל הכבוד!</div>
+      <span class="status-emoji">🎉</span>
+    </div>`;
+  } else if (has) {
+    statusHtml = `<div class="status-box fail">
+      <div class="status-text fail">נכון לכרגע, אין לך ציון עובר.<br>עליך להשלים את המשימות השוטפות.</div>
+      <span class="status-emoji">💪</span>
+    </div>`;
+  } else {
+    statusHtml = `<div class="status-box no-grade">
+      <div class="status-text no-grade">טרם הוזן ציון עבורך.<br>פנה למורה לפרטים.</div>
+    </div>`;
+  }
+
+  return `<div class="result">
+    <div class="greeting">שלום,<strong>${esc(name)}</strong></div>
+    ${gradeHtml}
+    ${statusHtml}
+    <div class="footer-note">// לפרטים נוספים פנה למורה</div>
+  </div>`;
+}
+
 async function lookup() {
-  const key   = document.getElementById('s-key').value.trim();
+  const key = document.getElementById('s-key').value.trim();
   const last3 = document.getElementById('s-last3').value.trim();
   const msgEl = document.getElementById('msg');
   const resEl = document.getElementById('result');
   msgEl.innerHTML = ''; resEl.innerHTML = '';
 
-  if (!key || !key.includes('.')) {
-    msgEl.innerHTML = '<div class="msg msg-err">נא להזין מפתח כניסה בפורמט: שם.אות — למשל ישראל.י</div>';
-    return;
-  }
-  if (!/^\d{3}$/.test(last3)) {
-    msgEl.innerHTML = '<div class="msg msg-err">נא להזין בדיוק 3 ספרות אחרונות של ת"ז</div>';
-    return;
-  }
+  if (!key || !key.includes('.')) { msgEl.innerHTML='<div class="msg msg-err">פורמט: שם.אות — למשל ישראל.י</div>'; return; }
+  if (!/^\d{3}$/.test(last3)) { msgEl.innerHTML='<div class="msg msg-err">נא להזין 3 ספרות אחרונות של ת"ז</div>'; return; }
 
   const btn = document.getElementById('check-btn');
-  btn.disabled = true; btn.innerHTML = 'בודק... <span class="spinner"></span>';
-
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> בודק...';
   try {
     const res = await fetch('/api/grade', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, last3 })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({key,last3})
     });
     const data = await res.json();
-    if (!res.ok) { msgEl.innerHTML = `<div class="msg msg-err">${data.error}</div>`; return; }
-
-    resEl.innerHTML = `
-      <div class="result">
-        <div class="greeting">שלום, <strong>${esc(data.name)}</strong></div>
-        <div class="status-box">
-          <div class="status-text">נכון לכרגע, אין לך ציון עובר.<br>עליך להשלים את המשימות השוטפות.</div>
-          <div class="blessings">בהצלחה! 💪</div>
-        </div>
-        <div class="note">לפרטים נוספים פנה למורה</div>
-      </div>`;
+    if (!res.ok) { msgEl.innerHTML=`<div class="msg msg-err">${data.error}</div>`; return; }
+    resEl.innerHTML = buildResult(data.name, data.grade);
   } catch(e) {
-    msgEl.innerHTML = '<div class="msg msg-err">שגיאת רשת — נסה שוב</div>';
+    msgEl.innerHTML='<div class="msg msg-err">שגיאת רשת — נסה שוב</div>';
   } finally {
-    btn.disabled = false; btn.textContent = 'בדוק ציון';
+    btn.disabled=false; btn.textContent='בדוק ציון';
   }
 }
 </script>
