@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת ציונים — מורה</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
@@ -13,7 +14,7 @@ header h1 { font-size: 18px; font-weight: 500; }
 .role-badge { background: #e8c84a; color: #1a1a2e; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
 .btn-logout { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); padding: 5px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: inherit; transition: background .15s; }
 .btn-logout:hover { background: rgba(255,255,255,.2); }
-.container { max-width: 740px; margin: 2rem auto; padding: 0 1rem; }
+.container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
 .stats { display: flex; gap: 10px; margin-bottom: 1.25rem; }
 .stat { flex: 1; background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 1rem; text-align: center; }
 .stat .num { font-size: 30px; font-weight: 700; color: #1a1a2e; }
@@ -23,12 +24,14 @@ header h1 { font-size: 18px; font-weight: 500; }
 .row { display: flex; gap: 10px; align-items: flex-end; }
 .field { flex: 1; }
 .field label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; }
-.field input { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fafaf8; transition: border .15s; }
+.field input[type=text], .field input[type=number] { width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fafaf8; transition: border .15s; }
 .field input:focus { outline: none; border-color: #1a1a2e; background: #fff; }
 .hint { font-size: 12px; color: #aaa; margin-top: 5px; }
 .btn { padding: 9px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-family: inherit; font-weight: 600; transition: all .15s; }
 .btn-dark { background: #1a1a2e; color: #fff; }
 .btn-dark:hover { background: #2d2d4e; }
+.btn-green { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.btn-green:hover { background: #bbf7d0; }
 .btn-red { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 .btn-red:hover { background: #fecaca; }
 .btn:active { transform: scale(0.97); }
@@ -36,16 +39,45 @@ header h1 { font-size: 18px; font-weight: 500; }
 .msg { font-size: 13px; padding: 9px 12px; border-radius: 8px; margin-top: 10px; }
 .msg-ok { background: #dcfce7; color: #166534; }
 .msg-err { background: #fee2e2; color: #991b1b; }
+.msg-warn { background: #fefce8; color: #854d0e; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th { text-align: right; padding: 8px 10px; color: #aaa; border-bottom: 1px solid #f0f0ec; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
-td { padding: 11px 10px; border-bottom: 1px solid #f5f5f0; vertical-align: middle; }
+td { padding: 9px 10px; border-bottom: 1px solid #f5f5f0; vertical-align: middle; }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: #fafaf8; }
 .key-pill { background: #f0f0ec; color: #555; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-family: monospace; }
 .last3-pill { background: #eff6ff; color: #1e40af; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-family: monospace; }
+.grade-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.grade-pass { background: #dcfce7; color: #166534; }
+.grade-fail { background: #fee2e2; color: #991b1b; }
+.grade-none { background: #f5f5f0; color: #aaa; }
+.grade-edit { display: flex; align-items: center; gap: 6px; }
+.grade-input { width: 64px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-family: inherit; text-align: center; background: #fafaf8; }
+.grade-input:focus { outline: none; border-color: #1a1a2e; }
+.save-btn { padding: 5px 10px; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.save-btn:hover { background: #2d2d4e; }
 .del-btn { background: none; border: none; cursor: pointer; color: #ccc; font-size: 15px; padding: 3px 7px; border-radius: 5px; transition: all .1s; }
 .del-btn:hover { color: #991b1b; background: #fee2e2; }
 .empty { text-align: center; color: #ccc; padding: 2.5rem 0; font-size: 13px; }
+
+/* Excel import area */
+.import-card { background: #fff; border: 2px dashed #d1d5db; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; transition: border-color .2s; }
+.import-card.dragover { border-color: #1a1a2e; background: #f8faff; }
+.import-card h2 { font-size: 14px; font-weight: 600; color: #888; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: .05em; }
+.import-drop { text-align: center; padding: 1rem 0; }
+.import-drop p { font-size: 14px; color: #aaa; margin-bottom: 12px; }
+.import-drop strong { color: #555; }
+.file-input { display: none; }
+.import-preview { margin-top: 1rem; }
+.preview-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.preview-table th { background: #f5f5f0; padding: 6px 10px; text-align: right; color: #888; font-weight: 600; border-bottom: 1px solid #eee; }
+.preview-table td { padding: 6px 10px; border-bottom: 1px solid #f5f5f0; }
+.preview-table tr:last-child td { border-bottom: none; }
+.row-ok { color: #166534; }
+.row-err { color: #991b1b; background: #fff5f5; }
+.import-summary { font-size: 13px; color: #555; margin-bottom: 10px; }
+.import-summary span { font-weight: 700; }
+
 .link-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 1rem 1.25rem; }
 .link-box p { font-size: 13px; color: #1d4ed8; font-weight: 600; margin-bottom: 8px; }
 .link-row { display: flex; gap: 8px; }
@@ -67,29 +99,56 @@ tr:hover td { background: #fafaf8; }
 </header>
 <div class="container">
   <div class="stats">
-    <div class="stat">
-      <div class="num" id="stat-total">—</div>
-      <div class="lbl">תלמידים במערכת</div>
+    <div class="stat"><div class="num" id="stat-total">—</div><div class="lbl">תלמידים</div></div>
+    <div class="stat"><div class="num" id="stat-graded">—</div><div class="lbl">עם ציון</div></div>
+    <div class="stat"><div class="num" id="stat-pass">—</div><div class="lbl">עוברים (55+)</div></div>
+  </div>
+
+  <!-- Excel Import -->
+  <div class="import-card" id="import-card">
+    <h2>ייבוא מאקסל</h2>
+    <div class="import-drop" id="drop-zone">
+      <p>גרור קובץ אקסל לכאן, או</p>
+      <button class="btn btn-green" onclick="document.getElementById('file-input').click()">בחר קובץ אקסל</button>
+      <input type="file" id="file-input" class="file-input" accept=".xlsx,.xls,.csv">
+      <p style="margin-top:10px;font-size:12px;color:#bbb;">עמודות נדרשות: <strong>שם פרטי | שם משפחה | 3 ספרות ת"ז | ציון</strong></p>
+    </div>
+    <div class="import-preview" id="import-preview" style="display:none">
+      <div class="import-summary" id="import-summary"></div>
+      <div id="preview-table-wrap"></div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="btn btn-dark" id="confirm-import-btn" onclick="confirmImport()">ייבא תלמידים</button>
+        <button class="btn btn-red" onclick="cancelImport()">ביטול</button>
+      </div>
+      <div id="import-msg"></div>
     </div>
   </div>
+
+  <!-- Manual add -->
   <div class="card">
-    <h2>הוספת תלמיד</h2>
+    <h2>הוספה ידנית</h2>
     <div class="row">
       <div class="field">
         <label>שם מלא (פרטי + משפחה)</label>
         <input type="text" id="t-name" placeholder="ישראל ישראלי" autocomplete="off">
-        <div class="hint">מפתח כניסה: שם פרטי.אות ראשונה — למשל <strong>ישראל.י</strong></div>
+        <div class="hint">מפתח כניסה: שם.אות — למשל <strong>ישראל.י</strong></div>
       </div>
       <div class="field" style="max-width:140px">
-        <label>3 ספרות אחרונות של ת"ז</label>
+        <label>3 ספרות אחרונות ת"ז</label>
         <input type="text" id="t-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
       </div>
+      <div class="field" style="max-width:100px">
+        <label>ציון (0–100)</label>
+        <input type="number" id="t-grade" placeholder="—" min="0" max="100" autocomplete="off">
+      </div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
+    <div style="display:flex;gap:10px;margin-top:12px">
       <button class="btn btn-dark" id="add-btn" onclick="addStudent()">הוסף תלמיד</button>
     </div>
     <div id="msg"></div>
   </div>
+
+  <!-- Students table -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
       <h2 style="margin:0">רשימת תלמידים (<span id="count">0</span>)</h2>
@@ -97,6 +156,7 @@ tr:hover td { background: #fafaf8; }
     </div>
     <div id="table-wrap"><div class="empty">טוען... <span class="spinner"></span></div></div>
   </div>
+
   <div class="link-box">
     <p>🔗 קישור לתלמידים</p>
     <div class="link-row">
@@ -105,18 +165,162 @@ tr:hover td { background: #fafaf8; }
     </div>
   </div>
 </div>
+
 <script>
 const token = sessionStorage.getItem('teacher_token');
 if (!token) window.location.href = '/login';
 
 document.getElementById('student-link').value = window.location.origin + '/student';
 
-// Verify session on load
 fetch('/api/teacher/check', { headers: { 'x-session-token': token } })
   .then(r => r.json()).then(d => { if (!d.valid) window.location.href = '/login'; });
 
 function hdrs() { return { 'Content-Type': 'application/json', 'x-session-token': token }; }
 
+// ── Excel import ──────────────────────────────────────────────
+let parsedRows = [];
+
+const dropZone = document.getElementById('drop-zone');
+const importCard = document.getElementById('import-card');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); importCard.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => importCard.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  importCard.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+    // Skip header row if first cell looks like text header
+    let dataRows = raw;
+    if (raw.length > 0) {
+      const first = String(raw[0][0] || '').trim();
+      if (isNaN(first) && first !== '') dataRows = raw.slice(1);
+    }
+
+    parsedRows = dataRows
+      .filter(r => r.some(c => String(c).trim() !== ''))
+      .map((r, i) => {
+        const firstName = String(r[0] || '').trim();
+        const lastName  = String(r[1] || '').trim();
+        const last3raw  = String(r[2] || '').trim().replace(/\D/g, '').slice(-3);
+        const gradeRaw  = String(r[3] || '').trim();
+        const grade     = gradeRaw === '' ? null : parseInt(gradeRaw);
+
+        const errors = [];
+        if (!firstName)              errors.push('חסר שם פרטי');
+        if (!lastName)               errors.push('חסר שם משפחה');
+        if (!/^\d{3}$/.test(last3raw)) errors.push('3 ספרות ת"ז שגויות');
+        if (gradeRaw !== '' && (isNaN(grade) || grade < 0 || grade > 100)) errors.push('ציון לא תקין');
+
+        const name = firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName;
+        const key = firstName && lastName
+          ? `${firstName}.${lastName[0]}`.toLowerCase()
+          : '';
+
+        return { firstName, lastName, name, last3: last3raw, grade, key, errors, rowNum: i + 2 };
+      });
+
+    showPreview();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showPreview() {
+  const valid   = parsedRows.filter(r => r.errors.length === 0);
+  const invalid = parsedRows.filter(r => r.errors.length > 0);
+
+  document.getElementById('import-summary').innerHTML =
+    `נמצאו <span>${parsedRows.length}</span> שורות — ` +
+    `<span style="color:#166534">${valid.length} תקינות</span>` +
+    (invalid.length ? `, <span style="color:#991b1b">${invalid.length} עם שגיאות</span>` : '');
+
+  const rows = parsedRows.slice(0, 20).map(r => `
+    <tr class="${r.errors.length ? 'row-err' : 'row-ok'}">
+      <td>${r.rowNum}</td>
+      <td>${esc(r.name)}</td>
+      <td>${esc(r.last3)}</td>
+      <td>${r.grade !== null ? r.grade : '—'}</td>
+      <td>${r.errors.length ? r.errors.join(', ') : '✓'}</td>
+    </tr>`).join('');
+
+  document.getElementById('preview-table-wrap').innerHTML = `
+    <table class="preview-table">
+      <thead><tr><th>#</th><th>שם</th><th>3 ספרות</th><th>ציון</th><th>סטטוס</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${parsedRows.length > 20 ? `<p style="font-size:12px;color:#aaa;margin-top:6px">מוצגות 20 שורות ראשונות מתוך ${parsedRows.length}</p>` : ''}`;
+
+  document.getElementById('confirm-import-btn').disabled = valid.length === 0;
+  document.getElementById('import-preview').style.display = 'block';
+  document.getElementById('drop-zone').style.display = 'none';
+}
+
+function cancelImport() {
+  parsedRows = [];
+  document.getElementById('import-preview').style.display = 'none';
+  document.getElementById('drop-zone').style.display = 'block';
+  document.getElementById('file-input').value = '';
+  document.getElementById('import-msg').innerHTML = '';
+}
+
+async function confirmImport() {
+  const valid = parsedRows.filter(r => r.errors.length === 0);
+  const btn = document.getElementById('confirm-import-btn');
+  btn.disabled = true;
+  btn.innerHTML = `מייבא ${valid.length} תלמידים... <span class="spinner"></span>`;
+
+  let added = 0, skipped = 0, errors = 0;
+
+  for (const s of valid) {
+    try {
+      const res = await fetch('/api/students', {
+        method: 'POST', headers: hdrs(),
+        body: JSON.stringify({ name: s.name, last3: s.last3 })
+      });
+      const data = await res.json();
+      if (!res.ok) { skipped++; continue; }
+
+      // Save grade if exists
+      if (s.grade !== null) {
+        const allRes = await fetch('/api/students', { headers: hdrs() });
+        const all = await allRes.json();
+        const newS = all.find(x => x.lookup_key === data.lookup_key);
+        if (newS) {
+          await fetch(`/api/students/${newS.id}/grade`, {
+            method: 'PATCH', headers: hdrs(),
+            body: JSON.stringify({ grade: s.grade })
+          });
+        }
+      }
+      added++;
+    } catch(e) { errors++; }
+  }
+
+  const msgEl = document.getElementById('import-msg');
+  msgEl.innerHTML = `<div class="msg ${errors ? 'msg-warn' : 'msg-ok'}">
+    ✓ יובאו ${added} תלמידים${skipped ? ` | ${skipped} כבר קיימים` : ''}${errors ? ` | ${errors} שגיאות` : ''}
+  </div>`;
+
+  btn.disabled = false;
+  btn.textContent = 'ייבא תלמידים';
+  loadStudents();
+  setTimeout(() => cancelImport(), 3000);
+}
+
+// ── Helpers ───────────────────────────────────────────────────
 function copyLink() {
   navigator.clipboard.writeText(window.location.origin + '/student').then(() => {
     const btn = document.querySelector('.btn-copy');
@@ -139,7 +343,8 @@ function showMsg(text, ok) {
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 document.getElementById('t-name').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('t-last3').focus(); });
-document.getElementById('t-last3').addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(); });
+document.getElementById('t-last3').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('t-grade').focus(); });
+document.getElementById('t-grade').addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(); });
 
 async function loadStudents() {
   try {
@@ -151,9 +356,18 @@ async function loadStudents() {
   }
 }
 
+function gradeBadge(grade) {
+  if (grade === null || grade === undefined) return '<span class="grade-badge grade-none">—</span>';
+  if (grade >= 55) return `<span class="grade-badge grade-pass">${grade}</span>`;
+  return `<span class="grade-badge grade-fail">${grade}</span>`;
+}
+
 function renderTable(students) {
   document.getElementById('count').textContent = students.length;
   document.getElementById('stat-total').textContent = students.length;
+  const graded = students.filter(s => s.grade !== null && s.grade !== undefined);
+  document.getElementById('stat-graded').textContent = graded.length;
+  document.getElementById('stat-pass').textContent = graded.filter(s => s.grade >= 55).length;
   document.getElementById('clear-btn').style.display = students.length ? 'inline-block' : 'none';
   if (!students.length) {
     document.getElementById('table-wrap').innerHTML = '<div class="empty">אין תלמידים עדיין</div>';
@@ -161,12 +375,19 @@ function renderTable(students) {
   }
   document.getElementById('table-wrap').innerHTML = `
     <table>
-      <thead><tr><th>שם מלא</th><th>מפתח כניסה</th><th>3 ספרות אחרונות</th><th></th></tr></thead>
+      <thead><tr><th>שם מלא</th><th>מפתח</th><th>ת"ז (3 אחרונות)</th><th>ציון</th><th>עדכון ציון</th><th></th></tr></thead>
       <tbody>${students.map(s => `
         <tr>
           <td><strong>${esc(s.name)}</strong></td>
           <td><span class="key-pill">${esc(s.lookup_key)}</span></td>
           <td><span class="last3-pill">***${esc(s.last3)}</span></td>
+          <td id="grade-display-${s.id}">${gradeBadge(s.grade)}</td>
+          <td>
+            <div class="grade-edit">
+              <input class="grade-input" type="number" id="grade-input-${s.id}" min="0" max="100" value="${s.grade !== null && s.grade !== undefined ? s.grade : ''}" placeholder="0–100">
+              <button class="save-btn" onclick="saveGrade(${s.id})">שמור</button>
+            </div>
+          </td>
           <td><button class="del-btn" onclick="deleteStudent(${s.id},this)">✕</button></td>
         </tr>`).join('')}
       </tbody>
@@ -176,9 +397,11 @@ function renderTable(students) {
 async function addStudent() {
   const name  = document.getElementById('t-name').value.trim();
   const last3 = document.getElementById('t-last3').value.trim();
-  if (!name)  return showMsg('נא להזין שם מלא');
+  const gradeVal = document.getElementById('t-grade').value.trim();
+  if (!name) return showMsg('נא להזין שם מלא');
   if (name.split(/\s+/).length < 2) return showMsg('נא להזין שם פרטי ושם משפחה');
   if (!/^\d{3}$/.test(last3)) return showMsg('נא להזין בדיוק 3 ספרות אחרונות של ת"ז');
+  if (gradeVal !== '' && (isNaN(gradeVal) || +gradeVal < 0 || +gradeVal > 100)) return showMsg('ציון חייב להיות בין 0 ל-100');
 
   const btn = document.getElementById('add-btn');
   btn.disabled = true; btn.innerHTML = 'מוסיף... <span class="spinner"></span>';
@@ -187,13 +410,37 @@ async function addStudent() {
     if (res.status === 401) { window.location.href = '/login'; return; }
     const data = await res.json();
     if (!res.ok) return showMsg(data.error || 'שגיאה');
+    if (gradeVal !== '') {
+      const allRes = await fetch('/api/students', { headers: hdrs() });
+      const all = await allRes.json();
+      const newStudent = all.find(s => s.lookup_key === data.lookup_key);
+      if (newStudent) await fetch(`/api/students/${newStudent.id}/grade`, { method: 'PATCH', headers: hdrs(), body: JSON.stringify({ grade: +gradeVal }) });
+    }
     document.getElementById('t-name').value = '';
     document.getElementById('t-last3').value = '';
+    document.getElementById('t-grade').value = '';
     document.getElementById('t-name').focus();
-    showMsg(`נוסף בהצלחה! מפתח כניסה: <strong>${data.lookup_key}</strong>`, true);
+    showMsg(`נוסף בהצלחה! מפתח: <strong>${data.lookup_key}</strong>`, true);
     loadStudents();
   } catch(e) { showMsg('שגיאת רשת'); }
   finally { btn.disabled = false; btn.textContent = 'הוסף תלמיד'; }
+}
+
+async function saveGrade(id) {
+  const input = document.getElementById(`grade-input-${id}`);
+  const val = input.value.trim();
+  const grade = val === '' ? null : parseInt(val);
+  if (val !== '' && (isNaN(grade) || grade < 0 || grade > 100)) {
+    input.style.borderColor = '#ef4444';
+    setTimeout(() => input.style.borderColor = '', 2000);
+    return;
+  }
+  try {
+    await fetch(`/api/students/${id}/grade`, { method: 'PATCH', headers: hdrs(), body: JSON.stringify({ grade: val === '' ? '' : grade }) });
+    document.getElementById(`grade-display-${id}`).innerHTML = gradeBadge(grade);
+    input.style.borderColor = '#22c55e';
+    setTimeout(() => { input.style.borderColor = ''; loadStudents(); }, 800);
+  } catch(e) {}
 }
 
 async function deleteStudent(id, el) {
