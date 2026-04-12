@@ -4,287 +4,375 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת ציונים — ניהול</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
-  --green: #22c55e;
-  --green-dim: #16a34a;
-  --green-glow: rgba(34,197,94,0.12);
-  --green-border: rgba(34,197,94,0.25);
-  --bg: #0a0e0c;
-  --bg2: #0d1210;
-  --bg3: #111713;
-  --surface: #161d18;
-  --surface2: #1a2320;
-  --surface3: #1f2b25;
-  --border: rgba(255,255,255,0.06);
-  --border-md: rgba(255,255,255,0.1);
-  --text: #e8ede9;
-  --text-dim: #7a9a7d;
-  --text-muted: #3d5040;
-  --red: #f87171;
-  --red-bg: rgba(248,113,113,0.08);
-  --red-border: rgba(248,113,113,0.2);
-  --amber: #fbbf24;
-  --amber-bg: rgba(251,191,36,0.08);
-  --blue: #60a5fa;
-  --blue-bg: rgba(96,165,250,0.08);
-  --blue-border: rgba(96,165,250,0.2);
+  --blue:#2563EB; --blue-light:#3B82F6; --blue-pale:#EFF6FF; --blue-border:#BFDBFE;
+  --green:#059669; --green-light:#10B981; --green-pale:#ECFDF5; --green-border:#A7F3D0;
+  --orange:#EA580C; --orange-light:#F97316; --orange-pale:#FFF7ED; --orange-border:#FED7AA;
+  --purple:#7C3AED; --purple-light:#8B5CF6; --purple-pale:#F5F3FF; --purple-border:#DDD6FE;
+  --red:#DC2626; --red-light:#EF4444; --red-pale:#FEF2F2; --red-border:#FECACA;
+  --amber:#D97706; --amber-pale:#FFFBEB; --amber-border:#FDE68A;
+  --white:#FFFFFF; --gray-50:#F9FAFB; --gray-100:#F3F4F6; --gray-200:#E5E7EB;
+  --gray-300:#D1D5DB; --gray-400:#9CA3AF; --gray-500:#6B7280;
+  --gray-600:#4B5563; --gray-700:#374151; --gray-800:#1F2937; --gray-900:#111827;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.05);
+  --shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.06);
+  --shadow-lg:0 10px 15px rgba(0,0,0,0.1),0 4px 6px rgba(0,0,0,0.05);
+  --shadow-xl:0 20px 25px rgba(0,0,0,0.1),0 10px 10px rgba(0,0,0,0.04);
+  --radius-sm:8px; --radius:12px; --radius-lg:16px; --radius-xl:20px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'IBM Plex Sans Hebrew', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Heebo',sans-serif;background:var(--gray-50);color:var(--gray-800);min-height:100vh}
 
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background-image:
-    linear-gradient(rgba(34,197,94,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(34,197,94,0.025) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
+/* ── Header ── */
+header{
+  background:var(--white);
+  border-bottom:1px solid var(--gray-200);
+  padding:0 2rem;height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:var(--shadow-sm);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,var(--blue),var(--blue-light));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;box-shadow:0 2px 8px rgba(37,99,235,0.3);
+}
+.logo-text{font-size:17px;font-weight:800;color:var(--gray-900);letter-spacing:-0.5px}
+.logo-sep{color:var(--gray-300);margin:0 6px}
+.logo-sub{font-size:13px;color:var(--gray-500);font-weight:400}
+.header-right{display:flex;align-items:center;gap:10px}
+.teacher-pill{
+  display:flex;align-items:center;gap:7px;
+  background:linear-gradient(135deg,var(--blue-pale),#E0F2FE);
+  border:1px solid var(--blue-border);
+  padding:6px 14px;border-radius:20px;
+  font-size:13px;font-weight:600;color:var(--blue)
+}
+.btn-logout{
+  background:var(--white);color:var(--gray-600);
+  border:1px solid var(--gray-200);padding:7px 16px;
+  border-radius:var(--radius-sm);font-size:13px;font-weight:500;
+  cursor:pointer;font-family:'Heebo',sans-serif;transition:all .15s;
+}
+.btn-logout:hover{background:var(--red-pale);color:var(--red);border-color:var(--red-border)}
+
+/* ── Page ── */
+.page{max-width:960px;margin:0 auto;padding:2rem 1.5rem}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:2rem}
+.stat-card{
+  background:var(--white);border-radius:var(--radius-lg);
+  padding:1.5rem;box-shadow:var(--shadow);
+  border:1px solid var(--gray-200);
+  display:flex;align-items:center;gap:1rem;
+  transition:transform .2s,box-shadow .2s;
+  animation:slideIn .4s ease both;
+}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.stat-card:nth-child(1){animation-delay:.05s}
+.stat-card:nth-child(2){animation-delay:.1s}
+.stat-card:nth-child(3){animation-delay:.15s}
+@keyframes slideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.stat-icon{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;flex-shrink:0;
+}
+.si-blue{background:var(--blue-pale)}
+.si-green{background:var(--green-pale)}
+.si-purple{background:var(--purple-pale)}
+.stat-info .val{font-size:32px;font-weight:800;line-height:1;color:var(--gray-900)}
+.stat-info .lbl{font-size:12px;color:var(--gray-500);font-weight:500;margin-top:3px}
+
+/* ── Section title ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.section-title{
+  font-size:16px;font-weight:700;color:var(--gray-800);
+  display:flex;align-items:center;gap:8px;
+}
+.section-pill{
+  font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;
+  text-transform:uppercase;letter-spacing:0.05em;
 }
 
-header {
-  position: sticky; top: 0; z-index: 100;
-  padding: 0 2rem;
-  height: 60px;
-  display: flex; align-items: center; justify-content: space-between;
-  background: rgba(10,14,12,0.9);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
+/* ── Cards ── */
+.card{
+  background:var(--white);border-radius:var(--radius-lg);
+  padding:1.75rem;margin-bottom:1.5rem;
+  box-shadow:var(--shadow);border:1px solid var(--gray-200);
+  animation:slideIn .4s ease .2s both;
 }
-.logo { display: flex; align-items: center; gap: 10px; }
-.logo-icon { width: 30px; height: 30px; background: var(--green); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-.logo-text { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
-.logo-sep { color: var(--text-muted); margin: 0 8px; }
-.logo-sub { font-size: 13px; color: var(--text-dim); }
-.header-right { display: flex; align-items: center; gap: 8px; }
-.badge-teacher { font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: var(--green-glow); color: var(--green); border: 1px solid var(--green-border); padding: 3px 10px; border-radius: 20px; }
-.btn-logout { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border-md); padding: 6px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: 'IBM Plex Sans Hebrew', sans-serif; transition: all .15s; }
-.btn-logout:hover { color: var(--text); border-color: var(--border-md); background: var(--surface3); }
 
-.container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
-
-/* Stats */
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-.stat {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.25rem 1.5rem;
-  position: relative;
-  overflow: hidden;
+/* ── Import zone ── */
+.import-zone{
+  border:2px dashed var(--blue-border);border-radius:var(--radius-lg);
+  padding:2rem;text-align:center;cursor:pointer;
+  background:var(--blue-pale);transition:all .2s;
 }
-.stat::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--green); opacity: 0.3; }
-.stat .num { font-size: 32px; font-weight: 600; color: var(--green); font-family: 'IBM Plex Mono', monospace; }
-.stat .lbl { font-size: 12px; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-
-/* Cards */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.5rem;
-  margin-bottom: 1.25rem;
-  position: relative;
+.import-zone:hover,.import-zone.dragover{
+  border-color:var(--blue);background:#DBEAFE;
+  transform:scale(1.01);
 }
-.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
-.card-title { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+.import-icon{font-size:40px;margin-bottom:10px;display:block}
+.import-zone h3{font-size:15px;font-weight:700;color:var(--blue);margin-bottom:6px}
+.import-zone p{font-size:13px;color:var(--gray-500);margin-bottom:14px}
+.import-note{font-size:11px;color:var(--gray-400);margin-top:12px}
+.import-note strong{color:var(--blue)}
+.file-input{display:none}
 
-/* Import zone */
-.import-zone {
-  border: 1px dashed rgba(34,197,94,0.25);
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  transition: all .2s;
-  cursor: pointer;
+/* ── Add form ── */
+.add-form{display:grid;grid-template-columns:1fr 140px 100px auto;gap:12px;align-items:end}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.field input{
+  width:100%;padding:11px 14px;
+  border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);
+  font-size:14px;font-family:'Heebo',sans-serif;
+  color:var(--gray-800);background:var(--gray-50);
+  transition:all .15s;outline:none;
 }
-.import-zone:hover, .import-zone.dragover { border-color: var(--green); background: var(--green-glow); }
-.import-zone p { font-size: 14px; color: var(--text-dim); margin-bottom: 12px; }
-.import-note { font-size: 11px; color: var(--text-muted); margin-top: 10px; font-family: 'IBM Plex Mono', monospace; }
+.field input::placeholder{color:var(--gray-400)}
+.field input:focus{border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(37,99,235,0.08)}
+.hint{font-size:11px;color:var(--gray-400);margin-top:4px}
 
-/* Form */
-.form-row { display: flex; gap: 12px; align-items: flex-end; }
-.field { flex: 1; }
-.field label { display: block; font-size: 11px; font-weight: 500; color: var(--text-dim); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.07em; }
-.field input {
-  width: 100%; padding: 10px 14px;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--text); font-size: 14px;
-  font-family: 'IBM Plex Sans Hebrew', sans-serif;
-  transition: border-color .15s, box-shadow .15s; outline: none;
+/* ── Buttons ── */
+.btn{padding:11px 20px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-size:13px;font-family:'Heebo',sans-serif;font-weight:700;transition:all .15s}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue-light));color:var(--white);box-shadow:0 2px 10px rgba(37,99,235,0.3)}
+.btn-primary:hover{box-shadow:0 4px 16px rgba(37,99,235,0.45);transform:translateY(-1px)}
+.btn-ghost{background:var(--white);color:var(--gray-600);border:1.5px solid var(--gray-200)}
+.btn-ghost:hover{background:var(--gray-50);border-color:var(--gray-300)}
+.btn-danger{background:var(--red-pale);color:var(--red);border:1px solid var(--red-border)}
+.btn-danger:hover{background:#FEE2E2}
+.btn-green{background:var(--blue-pale);color:var(--blue);border:1.5px solid var(--blue-border)}
+.btn-green:hover{background:#DBEAFE}
+.btn:active{transform:scale(0.97)!important}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* ── Messages ── */
+.msg{font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);margin-top:12px}
+.msg-ok{background:var(--green-pale);color:var(--green);border:1px solid var(--green-border)}
+.msg-err{background:var(--red-pale);color:var(--red);border:1px solid var(--red-border)}
+.msg-warn{background:var(--amber-pale);color:var(--amber);border:1px solid var(--amber-border)}
+
+/* ── Student cards grid ── */
+.students-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.student-card{
+  background:var(--white);border-radius:var(--radius-lg);
+  border:1px solid var(--gray-200);
+  padding:1.25rem;
+  box-shadow:var(--shadow-sm);
+  transition:all .2s;
+  position:relative;overflow:hidden;
 }
-.field input::placeholder { color: var(--text-muted); }
-.field input:focus { border-color: var(--green-border); box-shadow: 0 0 0 2px var(--green-glow); }
-.hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
-
-/* Buttons */
-.btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-family: 'IBM Plex Sans Hebrew', sans-serif; font-weight: 600; transition: all .15s; }
-.btn-primary { background: var(--green); color: #0a0e0c; }
-.btn-primary:hover { background: var(--green-dim); box-shadow: 0 4px 14px rgba(34,197,94,0.25); }
-.btn-ghost { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--border-md); }
-.btn-ghost:hover { color: var(--text); background: var(--surface3); }
-.btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
-.btn-danger:hover { background: rgba(248,113,113,0.15); }
-.btn-import { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid var(--green-border); }
-.btn-import:hover { background: var(--green-glow); }
-.btn:active { transform: scale(0.97); }
-.btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-
-/* Messages */
-.msg { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; }
-.msg-ok { background: var(--green-glow); color: var(--green); border: 1px solid var(--green-border); }
-.msg-err { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
-.msg-warn { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
-
-/* Table */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: right; padding: 10px 12px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; font-family: 'IBM Plex Mono', monospace; }
-td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: rgba(255,255,255,0.02); }
-
-.pill { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
-.pill-key { background: var(--surface3); color: var(--text-dim); border: 1px solid var(--border-md); }
-.pill-id { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
-.pill-grade-pass { background: var(--green-glow); color: var(--green); border: 1px solid var(--green-border); font-weight: 600; }
-.pill-grade-fail { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); font-weight: 600; }
-.pill-grade-none { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
-
-.grade-edit { display: flex; align-items: center; gap: 6px; }
-.grade-input {
-  width: 60px; padding: 5px 8px; background: var(--bg3);
-  border: 1px solid var(--border); border-radius: 6px;
-  color: var(--text); font-size: 13px; text-align: center; outline: none;
-  font-family: 'IBM Plex Mono', monospace;
-  transition: border-color .15s;
+.student-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--gray-300)}
+.student-card::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:3px;
 }
-.grade-input:focus { border-color: var(--green-border); }
-.save-btn {
-  padding: 5px 10px; background: var(--green-glow); color: var(--green);
-  border: 1px solid var(--green-border); border-radius: 6px;
-  font-size: 11px; font-weight: 600; cursor: pointer; transition: all .15s;
-  font-family: 'IBM Plex Sans Hebrew', sans-serif;
+.sc-pass::before{background:linear-gradient(90deg,var(--green),var(--green-light))}
+.sc-fail::before{background:linear-gradient(90deg,var(--orange),var(--orange-light))}
+.sc-none::before{background:linear-gradient(90deg,var(--gray-300),var(--gray-400))}
+
+.sc-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sc-avatar{
+  width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;flex-shrink:0;
+  color:var(--white);
 }
-.save-btn:hover { background: rgba(34,197,94,0.2); }
-.del-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 14px; padding: 3px 7px; border-radius: 5px; transition: all .1s; }
-.del-btn:hover { color: var(--red); background: var(--red-bg); }
+.av-blue{background:linear-gradient(135deg,var(--blue),var(--blue-light))}
+.av-green{background:linear-gradient(135deg,var(--green),var(--green-light))}
+.av-purple{background:linear-gradient(135deg,var(--purple),var(--purple-light))}
+.av-orange{background:linear-gradient(135deg,var(--orange),var(--orange-light))}
+.sc-info{flex:1;min-width:0}
+.sc-name{font-size:14px;font-weight:700;color:var(--gray-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-key{font-size:11px;color:var(--gray-400);font-family:monospace;margin-top:1px}
 
-.empty { text-align: center; color: var(--text-muted); padding: 3rem 0; font-size: 13px; }
+.sc-grade-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.grade-big{
+  font-size:36px;font-weight:800;line-height:1;
+}
+.gb-pass{color:var(--green)}
+.gb-fail{color:var(--orange)}
+.gb-none{color:var(--gray-300);font-size:24px}
+.grade-status-badge{
+  padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;
+}
+.gsb-pass{background:var(--green-pale);color:var(--green);border:1px solid var(--green-border)}
+.gsb-fail{background:var(--orange-pale);color:var(--orange);border:1px solid var(--orange-border)}
+.gsb-none{background:var(--gray-100);color:var(--gray-400);border:1px solid var(--gray-200)}
 
-/* Import preview */
-.preview-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-.preview-table th { background: var(--surface2); padding: 7px 10px; text-align: right; color: var(--text-dim); font-weight: 500; border-bottom: 1px solid var(--border); }
-.preview-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
-.preview-table tr:last-child td { border-bottom: none; }
-.row-ok { color: var(--green); }
-.row-err { color: var(--red); background: var(--red-bg); }
-.import-summary { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
-.import-summary span { font-weight: 600; color: var(--text); }
+.sc-edit{display:flex;gap:6px;align-items:center}
+.grade-input{
+  flex:1;padding:7px 10px;
+  border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);
+  font-size:13px;text-align:center;outline:none;
+  font-family:'Heebo',sans-serif;color:var(--gray-800);background:var(--gray-50);
+  transition:border-color .15s;
+}
+.grade-input:focus{border-color:var(--blue)}
+.save-btn{
+  padding:7px 12px;background:var(--blue);color:var(--white);
+  border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:700;
+  cursor:pointer;transition:all .15s;font-family:'Heebo',sans-serif;white-space:nowrap;
+}
+.save-btn:hover{background:var(--blue-light);box-shadow:0 2px 8px rgba(37,99,235,0.3)}
 
-/* Link box */
-.link-box { background: var(--blue-bg); border: 1px solid var(--blue-border); border-radius: 12px; padding: 1.25rem 1.5rem; }
-.link-label { font-size: 12px; color: var(--blue); font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'IBM Plex Mono', monospace; }
-.link-row { display: flex; gap: 8px; }
-.link-input { flex: 1; background: var(--bg3); border: 1px solid var(--blue-border); border-radius: 7px; padding: 9px 12px; font-size: 13px; color: var(--blue); direction: ltr; outline: none; font-family: 'IBM Plex Mono', monospace; }
-.btn-copy { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); padding: 9px 16px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'IBM Plex Sans Hebrew', sans-serif; transition: all .15s; }
-.btn-copy:hover { background: rgba(96,165,250,0.15); }
+.sc-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--gray-100);margin-top:2px}
+.sc-id{font-size:11px;color:var(--gray-400);font-family:monospace}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--gray-300);font-size:14px;padding:3px 6px;border-radius:6px;transition:all .1s}
+.del-btn:hover{color:var(--red);background:var(--red-pale)}
 
-.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(34,197,94,0.2); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 6px; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* empty */
+.empty-state{text-align:center;padding:3rem 1rem}
+.empty-icon{font-size:56px;margin-bottom:12px;display:block;opacity:.4}
+.empty-text{font-size:14px;color:var(--gray-400);font-weight:500}
 
-.file-input { display: none; }
+/* import preview */
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.preview-table th{background:var(--gray-100);padding:7px 10px;text-align:right;color:var(--gray-600);font-weight:600;border-bottom:1px solid var(--gray-200)}
+.preview-table td{padding:7px 10px;border-bottom:1px solid var(--gray-100)}
+.row-ok{color:var(--green)}.row-err{color:var(--red);background:var(--red-pale)}
+.import-summary{font-size:13px;color:var(--gray-600);margin-bottom:10px}
+.import-summary span{font-weight:700;color:var(--gray-800)}
+
+/* link box */
+.link-box{
+  background:linear-gradient(135deg,#EFF6FF,#E0F2FE);
+  border:1px solid var(--blue-border);border-radius:var(--radius-lg);
+  padding:1.25rem 1.5rem;margin-bottom:1.5rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+}
+.link-left{display:flex;align-items:center;gap:10px}
+.link-icon{font-size:24px}
+.link-title{font-size:13px;font-weight:700;color:var(--blue)}
+.link-sub{font-size:12px;color:var(--blue-light);margin-top:1px}
+.link-row{display:flex;gap:8px;align-items:center}
+.link-input{background:var(--white);border:1.5px solid var(--blue-border);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;color:var(--blue);direction:ltr;outline:none;font-family:monospace;width:260px}
+.btn-copy{background:var(--blue);color:var(--white);border:none;padding:8px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;transition:all .15s;box-shadow:0 2px 8px rgba(37,99,235,0.25)}
+.btn-copy:hover{background:var(--blue-light)}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* colors for avatars */
+.av-colors{--c0:#2563EB;--c1:#059669;--c2:#7C3AED;--c3:#EA580C;--c4:#DB2777;--c5:#0891B2}
 </style>
 </head>
 <body>
+
 <header>
   <div class="logo">
     <div class="logo-icon">📋</div>
     <span class="logo-text">מערכת ציונים</span>
     <span class="logo-sep">/</span>
-    <span class="logo-sub">ניהול</span>
+    <span class="logo-sub">לוח ניהול</span>
   </div>
   <div class="header-right">
-    <span class="badge-teacher">TEACHER</span>
-    <button class="btn-logout" onclick="logout()">יציאה</button>
+    <div class="teacher-pill">👩‍🏫 <span>מורה</span></div>
+    <button class="btn-logout" onclick="logout()">🚪 יציאה</button>
   </div>
 </header>
 
-<div class="container">
+<div class="page">
+
+  <!-- Stats -->
   <div class="stats">
-    <div class="stat"><div class="num" id="stat-total">0</div><div class="lbl">תלמידים</div></div>
-    <div class="stat"><div class="num" id="stat-graded">0</div><div class="lbl">עם ציון</div></div>
-    <div class="stat"><div class="num" id="stat-pass">0</div><div class="lbl">עוברים 55+</div></div>
+    <div class="stat-card">
+      <div class="stat-icon si-blue">👥</div>
+      <div class="stat-info"><div class="val" id="stat-total">0</div><div class="lbl">תלמידים במערכת</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-green">✅</div>
+      <div class="stat-info"><div class="val" id="stat-pass">0</div><div class="lbl">עוברים (55+)</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-purple">📝</div>
+      <div class="stat-info"><div class="val" id="stat-graded">0</div><div class="lbl">עם ציון</div></div>
+    </div>
   </div>
 
-  <!-- Excel Import -->
-  <div class="card" id="import-card">
-    <div class="card-header">
-      <span class="card-title">// ייבוא מאקסל</span>
+  <!-- Link box -->
+  <div class="link-box">
+    <div class="link-left">
+      <span class="link-icon">🔗</span>
+      <div><div class="link-title">קישור לתלמידים</div><div class="link-sub">שלח קישור זה לתלמידים לבדיקת ציון</div></div>
     </div>
-    <div id="drop-zone" class="import-zone" onclick="document.getElementById('file-input').click()">
-      <p>גרור קובץ אקסל לכאן, או לחץ לבחירה</p>
-      <button class="btn btn-import" onclick="e => e.stopPropagation()">בחר קובץ xlsx</button>
-      <div class="import-note">עמודות: שם פרטי | שם משפחה | 3 ספרות ת"ז | ציון</div>
+    <div class="link-row">
+      <input type="text" class="link-input" id="student-link" readonly>
+      <button class="btn-copy" onclick="copyLink()">העתק</button>
+    </div>
+  </div>
+
+  <!-- Import -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">📂 <span>ייבוא מאקסל</span></div>
+      <span class="section-pill" style="background:var(--blue-pale);color:var(--blue);border:1px solid var(--blue-border)">מהיר וקל</span>
+    </div>
+    <div id="drop-zone" class="import-zone">
+      <span class="import-icon">📊</span>
+      <h3>גרור קובץ אקסל לכאן</h3>
+      <p>או לחץ לבחירת קובץ מהמחשב</p>
+      <button class="btn btn-green" onclick="event.stopPropagation();document.getElementById('file-input').click()">📁 בחר קובץ xlsx</button>
+      <div class="import-note">עמודות: <strong>שם פרטי | שם משפחה | 3 ספרות ת"ז | ציון</strong></div>
     </div>
     <input type="file" id="file-input" class="file-input" accept=".xlsx,.xls,.csv">
     <div id="import-preview" style="display:none">
       <div class="import-summary" id="import-summary"></div>
-      <div id="preview-table-wrap"></div>
+      <div id="preview-wrap"></div>
       <div style="display:flex;gap:10px;margin-top:14px">
-        <button class="btn btn-primary" id="confirm-btn" onclick="confirmImport()">ייבא תלמידים</button>
+        <button class="btn btn-primary" id="confirm-btn" onclick="confirmImport()">✅ ייבא תלמידים</button>
         <button class="btn btn-ghost" onclick="cancelImport()">ביטול</button>
       </div>
       <div id="import-msg"></div>
     </div>
   </div>
 
-  <!-- Manual add -->
+  <!-- Add student -->
   <div class="card">
-    <div class="card-header"><span class="card-title">// הוספה ידנית</span></div>
-    <div class="form-row">
+    <div class="section-header">
+      <div class="section-title">➕ <span>הוספה ידנית</span></div>
+    </div>
+    <div class="add-form">
       <div class="field">
         <label>שם מלא</label>
         <input type="text" id="t-name" placeholder="ישראל ישראלי" autocomplete="off">
-        <div class="hint">מפתח: שם.אות — למשל <strong style="color:var(--text)">ישראל.י</strong></div>
+        <div class="hint">מפתח: שם.אות — למשל <strong>ישראל.י</strong></div>
       </div>
-      <div class="field" style="max-width:140px">
+      <div class="field">
         <label>3 ספרות ת"ז</label>
         <input type="text" id="t-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
       </div>
-      <div class="field" style="max-width:100px">
+      <div class="field">
         <label>ציון</label>
         <input type="number" id="t-grade" placeholder="—" min="0" max="100" autocomplete="off">
       </div>
-    </div>
-    <div style="margin-top:14px">
-      <button class="btn btn-primary" id="add-btn" onclick="addStudent()">הוסף תלמיד</button>
+      <div class="field">
+        <label style="opacity:0">.</label>
+        <button class="btn btn-primary" id="add-btn" onclick="addStudent()" style="white-space:nowrap">הוסף ←</button>
+      </div>
     </div>
     <div id="msg"></div>
   </div>
 
-  <!-- Students table -->
+  <!-- Students -->
   <div class="card">
-    <div class="card-header">
-      <span class="card-title">// תלמידים (<span id="count">0</span>)</span>
-      <button class="btn btn-danger" id="clear-btn" onclick="clearAll()" style="display:none;font-size:12px;padding:6px 14px">מחק הכל</button>
+    <div class="section-header">
+      <div class="section-title">🎓 <span>תלמידים (<span id="count">0</span>)</span></div>
+      <button class="btn btn-danger" id="clear-btn" onclick="clearAll()" style="display:none;font-size:12px;padding:7px 14px">🗑️ מחק הכל</button>
     </div>
-    <div class="table-wrap" id="table-wrap">
-      <div class="empty"><span class="spinner"></span> טוען...</div>
+    <div id="students-wrap">
+      <div class="empty-state"><span class="empty-icon">📭</span><div class="empty-text">טוען...</div></div>
     </div>
   </div>
 
-  <div class="link-box">
-    <div class="link-label">// קישור לתלמידים</div>
-    <div class="link-row">
-      <input type="text" class="link-input" id="student-link" readonly>
-      <button class="btn-copy" onclick="copyLink()">העתק</button>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -297,11 +385,16 @@ fetch('/api/teacher/check', { headers: { 'x-session-token': token } })
 function hdrs() { return { 'Content-Type': 'application/json', 'x-session-token': token }; }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── Drag & drop ───────────────────────────────────────────────
+const AV_COLORS = ['#2563EB','#059669','#7C3AED','#EA580C','#DB2777','#0891B2'];
+function avatarColor(name) { let h=0; for(let c of name) h=(h*31+c.charCodeAt(0))%AV_COLORS.length; return AV_COLORS[h]; }
+function initials(name) { const p=name.trim().split(/\s+/); return p.length>=2 ? p[0][0]+p[p.length-1][0] : p[0].substring(0,2); }
+
+// Drag & drop
 const dz = document.getElementById('drop-zone');
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
 dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+dz.addEventListener('click', () => document.getElementById('file-input').click());
 document.getElementById('file-input').addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
 let parsedRows = [];
@@ -313,16 +406,16 @@ function handleFile(file) {
     let rows = raw;
     if (raw.length && isNaN(String(raw[0][0]).trim()) && String(raw[0][0]).trim()) rows = raw.slice(1);
     parsedRows = rows.filter(r => r.some(c => String(c).trim())).map((r, i) => {
-      const fn = String(r[0]||'').trim(), ln = String(r[1]||'').trim();
-      const l3 = String(r[2]||'').trim().replace(/\D/g,'').slice(-3);
-      const gv = String(r[3]||'').trim();
-      const g = gv === '' ? null : parseInt(gv);
-      const errors = [];
-      if (!fn) errors.push('חסר שם פרטי');
-      if (!ln) errors.push('חסר שם משפחה');
-      if (!/^\d{3}$/.test(l3)) errors.push('3 ספרות שגויות');
-      if (gv && (isNaN(g)||g<0||g>100)) errors.push('ציון לא תקין');
-      return { name: fn&&ln?`${fn} ${ln}`:fn||ln, last3: l3, grade: g, key: fn&&ln?`${fn}.${ln[0]}`.toLowerCase():'', errors, row: i+2 };
+      const fn=String(r[0]||'').trim(), ln=String(r[1]||'').trim();
+      const l3=String(r[2]||'').trim().replace(/\D/g,'').padStart(3,'0').slice(-3);
+      const gv=String(r[3]||'').trim();
+      const g=gv===''?null:parseInt(gv);
+      const errors=[];
+      if(!fn) errors.push('חסר שם פרטי');
+      if(!ln) errors.push('חסר שם משפחה');
+      if(!/^\d{3}$/.test(l3)) errors.push('3 ספרות שגויות');
+      if(gv&&(isNaN(g)||g<0||g>100)) errors.push('ציון לא תקין');
+      return {name:fn&&ln?`${fn} ${ln}`:fn||ln,last3:l3,grade:g,key:fn&&ln?`${fn}.${ln[0]}`.toLowerCase():'',errors,row:i+2};
     });
     showPreview();
   };
@@ -330,54 +423,51 @@ function handleFile(file) {
 }
 
 function showPreview() {
-  const valid = parsedRows.filter(r => !r.errors.length);
-  const bad = parsedRows.filter(r => r.errors.length);
-  document.getElementById('import-summary').innerHTML =
+  const valid=parsedRows.filter(r=>!r.errors.length), bad=parsedRows.filter(r=>r.errors.length);
+  document.getElementById('import-summary').innerHTML=
     `<span>${parsedRows.length}</span> שורות — <span style="color:var(--green)">${valid.length} תקינות</span>${bad.length?`, <span style="color:var(--red)">${bad.length} שגיאות</span>`:''}`;
-  document.getElementById('preview-table-wrap').innerHTML = `
+  document.getElementById('preview-wrap').innerHTML=`
     <table class="preview-table"><thead><tr><th>#</th><th>שם</th><th>3 ספרות</th><th>ציון</th><th>סטטוס</th></tr></thead>
-    <tbody>${parsedRows.slice(0,20).map(r=>`<tr class="${r.errors.length?'row-err':'row-ok'}">
+    <tbody>${parsedRows.slice(0,15).map(r=>`<tr class="${r.errors.length?'row-err':'row-ok'}">
       <td>${r.row}</td><td>${esc(r.name)}</td><td>${esc(r.last3)}</td><td>${r.grade??'—'}</td>
-      <td>${r.errors.length?r.errors.join(', '):'✓'}</td></tr>`).join('')}</tbody></table>
-    ${parsedRows.length>20?`<p style="font-size:11px;color:var(--text-muted);margin-top:6px">מוצגות 20 מתוך ${parsedRows.length}</p>`:''}`;
+      <td>${r.errors.length?r.errors.join(', '):'✓'}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('confirm-btn').disabled = !valid.length;
   document.getElementById('import-preview').style.display = 'block';
   document.getElementById('drop-zone').style.display = 'none';
 }
 
 function cancelImport() {
-  parsedRows = [];
-  document.getElementById('import-preview').style.display = 'none';
-  document.getElementById('drop-zone').style.display = 'block';
-  document.getElementById('file-input').value = '';
-  document.getElementById('import-msg').innerHTML = '';
+  parsedRows=[];
+  document.getElementById('import-preview').style.display='none';
+  document.getElementById('drop-zone').style.display='block';
+  document.getElementById('file-input').value='';
+  document.getElementById('import-msg').innerHTML='';
 }
 
 async function confirmImport() {
-  const valid = parsedRows.filter(r => !r.errors.length);
-  const btn = document.getElementById('confirm-btn');
-  btn.disabled = true; btn.innerHTML = `<span class="spinner"></span> מייבא ${valid.length}...`;
-  let added=0, skipped=0;
+  const valid=parsedRows.filter(r=>!r.errors.length);
+  const btn=document.getElementById('confirm-btn');
+  btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> מייבא ${valid.length}...`;
+  let added=0,skipped=0;
   for (const s of valid) {
     try {
-      const res = await fetch('/api/students', { method:'POST', headers:hdrs(), body:JSON.stringify({name:s.name,last3:s.last3}) });
-      const data = await res.json();
-      if (!res.ok) { skipped++; continue; }
-      if (s.grade !== null) {
-        const all = await fetch('/api/students',{headers:hdrs()}).then(r=>r.json());
-        const ns = all.find(x=>x.lookup_key===data.lookup_key);
-        if (ns) await fetch(`/api/students/${ns.id}/grade`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({grade:s.grade})});
+      const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name:s.name,last3:s.last3})});
+      const data=await res.json();
+      if(!res.ok){skipped++;continue;}
+      if(s.grade!==null){
+        const all=await fetch('/api/students',{headers:hdrs()}).then(r=>r.json());
+        const ns=all.find(x=>x.lookup_key===data.lookup_key);
+        if(ns) await fetch(`/api/students/${ns.id}/grade`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({grade:s.grade})});
       }
       added++;
-    } catch(e) { skipped++; }
+    } catch(e){skipped++;}
   }
-  document.getElementById('import-msg').innerHTML = `<div class="msg msg-ok">✓ יובאו ${added} תלמידים${skipped?` | ${skipped} דולגו`:''}</div>`;
-  btn.disabled = false; btn.textContent = 'ייבא תלמידים';
+  document.getElementById('import-msg').innerHTML=`<div class="msg msg-ok">✅ יובאו ${added} תלמידים${skipped?` | ${skipped} דולגו`:''}</div>`;
+  btn.disabled=false; btn.innerHTML='✅ ייבא תלמידים';
   loadStudents();
-  setTimeout(cancelImport, 3000);
+  setTimeout(cancelImport,3000);
 }
 
-// ── CRUD ──────────────────────────────────────────────────────
 function copyLink() {
   navigator.clipboard.writeText(window.location.origin+'/student').then(()=>{
     const b=document.querySelector('.btn-copy'); b.textContent='✓ הועתק!';
@@ -405,37 +495,59 @@ async function loadStudents() {
   try {
     const res=await fetch('/api/students',{headers:hdrs()});
     if(res.status===401){window.location.href='/login';return;}
-    renderTable(await res.json());
-  } catch(e) { document.getElementById('table-wrap').innerHTML='<div class="empty">שגיאה בטעינה</div>'; }
+    renderStudents(await res.json());
+  } catch(e) {
+    document.getElementById('students-wrap').innerHTML='<div class="empty-state"><span class="empty-icon">⚠️</span><div class="empty-text">שגיאה בטעינה</div></div>';
+  }
 }
 
-function gradePill(g) {
-  if(g===null||g===undefined) return '<span class="pill pill-grade-none">—</span>';
-  if(g>=55) return `<span class="pill pill-grade-pass">${g}</span>`;
-  return `<span class="pill pill-grade-fail">${g}</span>`;
-}
-
-function renderTable(students) {
+function renderStudents(students) {
   document.getElementById('count').textContent=students.length;
   document.getElementById('stat-total').textContent=students.length;
   const gr=students.filter(s=>s.grade!==null&&s.grade!==undefined);
   document.getElementById('stat-graded').textContent=gr.length;
   document.getElementById('stat-pass').textContent=gr.filter(s=>s.grade>=55).length;
   document.getElementById('clear-btn').style.display=students.length?'inline-block':'none';
-  if(!students.length){document.getElementById('table-wrap').innerHTML='<div class="empty">אין תלמידים עדיין</div>';return;}
-  document.getElementById('table-wrap').innerHTML=`
-    <table><thead><tr><th>שם</th><th>מפתח</th><th>ת"ז</th><th>ציון</th><th>עדכון</th><th></th></tr></thead>
-    <tbody>${students.map(s=>`<tr>
-      <td><strong>${esc(s.name)}</strong></td>
-      <td><span class="pill pill-key">${esc(s.lookup_key)}</span></td>
-      <td><span class="pill pill-id">***${esc(s.last3)}</span></td>
-      <td id="gd-${s.id}">${gradePill(s.grade)}</td>
-      <td><div class="grade-edit">
-        <input class="grade-input" type="number" id="gi-${s.id}" min="0" max="100" value="${s.grade??''}" placeholder="—">
+
+  if(!students.length) {
+    document.getElementById('students-wrap').innerHTML='<div class="empty-state"><span class="empty-icon">🎓</span><div class="empty-text">אין תלמידים עדיין — הוסף את הראשון!</div></div>';
+    return;
+  }
+
+  const cards = students.map(s => {
+    const has = s.grade!==null&&s.grade!==undefined;
+    const pass = has && s.grade>=55;
+    const cls = has?(pass?'sc-pass':'sc-fail'):'sc-none';
+    const gradeNum = has?`<div class="grade-big ${pass?'gb-pass':'gb-fail'}">${s.grade}</div>`:`<div class="grade-big gb-none">—</div>`;
+    const badge = has
+      ? `<span class="grade-status-badge ${pass?'gsb-pass':'gsb-fail'}">${pass?'עובר ✓':'לא עובר'}</span>`
+      : `<span class="grade-status-badge gsb-none">ללא ציון</span>`;
+    const av = avatarColor(s.name);
+    const init = initials(s.name);
+    return `<div class="student-card ${cls}" id="sc-${s.id}">
+      <div class="sc-top">
+        <div class="sc-avatar" style="background:linear-gradient(135deg,${av},${av}cc)">${esc(init)}</div>
+        <div class="sc-info">
+          <div class="sc-name">${esc(s.name)}</div>
+          <div class="sc-key">${esc(s.lookup_key)}</div>
+        </div>
+      </div>
+      <div class="sc-grade-row">
+        ${gradeNum}
+        ${badge}
+      </div>
+      <div class="sc-edit">
+        <input class="grade-input" type="number" id="gi-${s.id}" min="0" max="100" value="${s.grade??''}" placeholder="הזן ציון 0–100">
         <button class="save-btn" onclick="saveGrade(${s.id})">שמור</button>
-      </div></td>
-      <td><button class="del-btn" onclick="del(${s.id},this)">✕</button></td>
-    </tr>`).join('')}</tbody></table>`;
+      </div>
+      <div class="sc-footer">
+        <span class="sc-id">***${esc(s.last3)}</span>
+        <button class="del-btn" onclick="del(${s.id},this)" title="מחק">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('students-wrap').innerHTML=`<div class="students-grid">${cards}</div>`;
 }
 
 async function addStudent() {
@@ -447,13 +559,13 @@ async function addStudent() {
   if(!/^\d{3}$/.test(last3)) return showMsg('נא להזין 3 ספרות ת"ז');
   if(gv&&(isNaN(gv)||+gv<0||+gv>100)) return showMsg('ציון בין 0–100');
   const btn=document.getElementById('add-btn');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> מוסיף...';
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
   try {
     const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name,last3})});
     if(res.status===401){window.location.href='/login';return;}
     const data=await res.json();
     if(!res.ok) return showMsg(data.error||'שגיאה');
-    if(gv) {
+    if(gv){
       const all=await fetch('/api/students',{headers:hdrs()}).then(r=>r.json());
       const ns=all.find(s=>s.lookup_key===data.lookup_key);
       if(ns) await fetch(`/api/students/${ns.id}/grade`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({grade:+gv})});
@@ -462,10 +574,10 @@ async function addStudent() {
     document.getElementById('t-last3').value='';
     document.getElementById('t-grade').value='';
     document.getElementById('t-name').focus();
-    showMsg(`נוסף! מפתח: <strong>${data.lookup_key}</strong>`,true);
+    showMsg(`✅ נוסף! מפתח: <strong>${data.lookup_key}</strong>`,true);
     loadStudents();
   } catch(e){showMsg('שגיאת רשת');}
-  finally{btn.disabled=false;btn.textContent='הוסף תלמיד';}
+  finally{btn.disabled=false;btn.textContent='הוסף ←';}
 }
 
 async function saveGrade(id) {
@@ -474,20 +586,19 @@ async function saveGrade(id) {
   const g=val===''?null:parseInt(val);
   if(val&&(isNaN(g)||g<0||g>100)){input.style.borderColor='var(--red)';setTimeout(()=>input.style.borderColor='',2000);return;}
   await fetch(`/api/students/${id}/grade`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({grade:val===''?'':g})});
-  document.getElementById(`gd-${id}`).innerHTML=gradePill(g);
   input.style.borderColor='var(--green)';
-  setTimeout(()=>{input.style.borderColor='';loadStudents();},800);
+  setTimeout(()=>{input.style.borderColor='';loadStudents();},600);
 }
 
-async function del(id,el) {
-  if(!confirm('למחוק?')) return;
+async function del(id,el){
+  if(!confirm('למחוק תלמיד זה?')) return;
   el.disabled=true;
   await fetch(`/api/students/${id}`,{method:'DELETE',headers:hdrs()});
   loadStudents();
 }
 
-async function clearAll() {
-  if(!confirm('למחוק הכל לצמיתות?')) return;
+async function clearAll(){
+  if(!confirm('למחוק את כל התלמידים לצמיתות?')) return;
   await fetch('/api/students',{method:'DELETE',headers:hdrs()});
   loadStudents();
 }
