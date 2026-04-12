@@ -6,130 +6,75 @@
 <title>מערכת ציונים — בדיקת ציון</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; display: flex; flex-direction: column; }
-
-header {
-  background: #1a1a2e;
-  color: #fff;
-  padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
 header h1 { font-size: 18px; font-weight: 500; }
 .role-badge { background: #a5f3fc; color: #0e7490; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-
-.container { max-width: 420px; margin: 4rem auto; padding: 0 1rem; width: 100%; }
-
+.container { max-width: 420px; margin: 4rem auto; padding: 0 1rem; }
 .card { background: #fff; border: 1px solid #e5e5e0; border-radius: 16px; padding: 2rem; }
 .card-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 0.4rem; }
 .card-sub { font-size: 13px; color: #aaa; text-align: center; margin-bottom: 2rem; }
-
 .field { margin-bottom: 1rem; }
 .field label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500; }
-.field input {
-  width: 100%; padding: 13px 16px;
-  border: 2px solid #e5e5e0; border-radius: 10px;
-  font-size: 20px; font-family: inherit;
-  background: #fafaf8; text-align: center;
-  letter-spacing: 3px; direction: ltr;
-  transition: border .15s;
-}
+.field input { width: 100%; padding: 13px 16px; border: 2px solid #e5e5e0; border-radius: 10px; font-size: 18px; font-family: inherit; background: #fafaf8; text-align: center; transition: border .15s; }
 .field input:focus { outline: none; border-color: #1a1a2e; background: #fff; }
-
-.btn {
-  width: 100%; padding: 13px;
-  background: #1a1a2e; color: #fff;
-  border: none; border-radius: 10px;
-  font-size: 16px; font-family: inherit; font-weight: 700;
-  cursor: pointer; transition: background .15s;
-}
+.example { font-size: 12px; color: #bbb; text-align: center; margin-top: 6px; }
+.btn { width: 100%; padding: 13px; background: #1a1a2e; color: #fff; border: none; border-radius: 10px; font-size: 16px; font-family: inherit; font-weight: 700; cursor: pointer; transition: background .15s; }
 .btn:hover { background: #2d2d4e; }
 .btn:active { transform: scale(0.98); }
 .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-
 .msg { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; text-align: center; }
 .msg-err { background: #fee2e2; color: #991b1b; }
-
-.result {
-  margin-top: 1.75rem;
-  padding-top: 1.75rem;
-  border-top: 1px solid #f0f0ec;
-  text-align: center;
-  animation: fadeIn .3s ease;
-}
+.result { margin-top: 1.75rem; padding-top: 1.75rem; border-top: 1px solid #f0f0ec; text-align: center; animation: fadeIn .3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
 .greeting { font-size: 15px; color: #888; margin-bottom: 1rem; }
 .greeting strong { color: #1a1a2e; font-size: 17px; }
-.status-pill {
-  display: inline-block;
-  padding: 12px 36px;
-  border-radius: 40px;
-  font-size: 22px;
-  font-weight: 700;
-  background: #fee2e2;
-  color: #991b1b;
-  margin-bottom: 1rem;
-}
+.status-pill { display: inline-block; padding: 12px 36px; border-radius: 40px; font-size: 22px; font-weight: 700; background: #fee2e2; color: #991b1b; margin-bottom: 1rem; }
 .note { font-size: 12px; color: #bbb; }
-
 .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-
 <header>
   <h1>📋 מערכת ציונים</h1>
   <span class="role-badge">תלמיד</span>
 </header>
-
 <div class="container">
   <div class="card">
     <div class="card-title">בדיקת ציון</div>
-    <div class="card-sub">הכנס את מספר תעודת הזהות שלך</div>
-
+    <div class="card-sub">הכנס שם פרטי + נקודה + אות ראשונה של שם משפחה</div>
     <div class="field">
-      <label>מספר תז</label>
-      <input type="text" id="s-id" placeholder="123456789" maxlength="9" inputmode="numeric" autocomplete="off">
+      <label>מפתח כניסה</label>
+      <input type="text" id="s-key" placeholder="ישראל.י" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="example">דוגמה: ישראל ישראלי ← <strong>ישראל.י</strong></div>
     </div>
     <button class="btn" id="check-btn" onclick="lookup()">בדוק ציון</button>
     <div id="msg"></div>
     <div id="result"></div>
   </div>
 </div>
-
 <script>
-document.getElementById('s-id').addEventListener('keydown', e => {
-  if (e.key === 'Enter') lookup();
-});
-
+document.getElementById('s-key').addEventListener('keydown', e => { if (e.key === 'Enter') lookup(); });
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 async function lookup() {
-  const tid = document.getElementById('s-id').value.trim();
+  const key = document.getElementById('s-key').value.trim();
   const msgEl = document.getElementById('msg');
   const resEl = document.getElementById('result');
-  msgEl.innerHTML = '';
-  resEl.innerHTML = '';
-
-  if (!tid || tid.length < 5) {
-    msgEl.innerHTML = '<div class="msg msg-err">נא להזין מספר תז תקין</div>';
+  msgEl.innerHTML = ''; resEl.innerHTML = '';
+  if (!key || !key.includes('.')) {
+    msgEl.innerHTML = '<div class="msg msg-err">נא להזין בפורמט: שם פרטי.אות — לדוגמה ישראל.י</div>';
     return;
   }
-
   const btn = document.getElementById('check-btn');
-  btn.disabled = true;
-  btn.innerHTML = 'בודק... <span class="spinner"></span>';
-
+  btn.disabled = true; btn.innerHTML = 'בודק... <span class="spinner"></span>';
   try {
-    const res = await fetch(`/api/grade/${encodeURIComponent(tid)}`);
+    const res = await fetch(`/api/grade/${encodeURIComponent(key)}`);
     const data = await res.json();
-
     if (!res.ok) {
       msgEl.innerHTML = `<div class="msg msg-err">${data.error || 'שגיאה'}</div>`;
       return;
     }
-
     resEl.innerHTML = `
       <div class="result">
         <div class="greeting">שלום, <strong>${esc(data.name)}</strong></div>
@@ -139,13 +84,8 @@ async function lookup() {
   } catch(e) {
     msgEl.innerHTML = '<div class="msg msg-err">שגיאת רשת — נסה שוב</div>';
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'בדוק ציון';
+    btn.disabled = false; btn.textContent = 'בדוק ציון';
   }
-}
-
-function esc(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 </body>
