@@ -25,10 +25,75 @@ db.exec(`
     token TEXT PRIMARY KEY,
     expires_at INTEGER NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS student_attempts (
+    ip TEXT PRIMARY KEY,
+    attempts INTEGER DEFAULT 1,
+    blocked_until INTEGER DEFAULT 0,
+    last_attempt INTEGER NOT NULL
+  );
 `);
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ── Rate limiting for students ────────────────────────────────
+const MAX_ATTEMPTS = 5;
+const BLOCK_MINUTES = 15;
+
+function getClientIp(req) {
+  return (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',')[0].trim();
+}
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const row = db.prepare('SELECT * FROM student_attempts WHERE ip = ?').get(ip);
+
+  if (!row) return { allowed: true };
+
+  // Still blocked?
+  if (row.blocked_until > now) {
+    const minutesLeft = Math.ceil((row.blocked_until - now) / 60000);
+    return { allowed: false, minutesLeft };
+  }
+
+  // Reset if last attempt was over 1 hour ago
+  if (now - row.last_attempt > 60 * 60 * 1000) {
+    db.prepare('DELETE FROM student_attempts WHERE ip = ?').run(ip);
+    return { allowed: true };
+  }
+
+  return { allowed: true, attempts: row.attempts };
+}
+
+function recordFailedAttempt(ip) {
+  const now = Date.now();
+  const row = db.prepare('SELECT * FROM student_attempts WHERE ip = ?').get(ip);
+
+  if (!row) {
+    db.prepare('INSERT INTO student_attempts (ip, attempts, last_attempt) VALUES (?, 1, ?)').run(ip, now);
+    return { attempts: 1, blocked: false };
+  }
+
+  const newAttempts = row.attempts + 1;
+  let blockedUntil = 0;
+  let blocked = false;
+
+  if (newAttempts >= MAX_ATTEMPTS) {
+    blockedUntil = now + BLOCK_MINUTES * 60 * 1000;
+    blocked = true;
+  }
+
+  db.prepare('UPDATE student_attempts SET attempts = ?, blocked_until = ?, last_attempt = ? WHERE ip = ?')
+    .run(newAttempts, blockedUntil, now, ip);
+
+  return { attempts: newAttempts, blocked, minutesLeft: BLOCK_MINUTES };
+}
+
+function clearAttempts(ip) {
+  db.prepare('DELETE FROM student_attempts WHERE ip = ?').run(ip);
+}
+
+// ── Auth helpers ──────────────────────────────────────────────
 
 function createSession() {
   const token = crypto.randomBytes(32).toString('hex');
@@ -48,6 +113,8 @@ function auth(req, res, next) {
     return res.status(401).json({ error: 'לא מורשה' });
   next();
 }
+
+// ── Teacher login ─────────────────────────────────────────────
 
 app.post('/api/teacher/login', (req, res) => {
   const id_number = (req.body.id_number || '').trim().replace(/\D/g, '');
@@ -74,6 +141,8 @@ app.post('/api/teacher/logout', (req, res) => {
 app.get('/api/teacher/check', (req, res) => {
   res.json({ valid: isValidSession(req.headers['x-session-token']) });
 });
+
+// ── Students (protected) ──────────────────────────────────────
 
 function buildKey(fullName) {
   const parts = fullName.trim().split(/\s+/);
@@ -111,16 +180,49 @@ app.delete('/api/students', auth, (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Student grade lookup with rate limiting ───────────────────
+
 app.post('/api/grade', (req, res) => {
+  const ip    = getClientIp(req);
   const key   = (req.body.key   || '').toLowerCase().trim();
   const last3 = (req.body.last3 || '').trim();
+
+  // Check if blocked
+  const limit = checkRateLimit(ip);
+  if (!limit.allowed) {
+    return res.status(429).json({
+      error: `יותר מדי ניסיונות כושלים. נסה שוב בעוד ${limit.minutesLeft} דקות`
+    });
+  }
+
   if (!key)                   return res.status(400).json({ error: 'חסר מפתח כניסה' });
   if (!/^\d{3}$/.test(last3)) return res.status(400).json({ error: 'נא להזין 3 ספרות בדיוק' });
+
   const row = db.prepare('SELECT name, last3 FROM students WHERE lookup_key = ?').get(key);
-  if (!row)              return res.status(404).json({ error: 'לא נמצא — בדוק שם פרטי ואות ראשונה של שם משפחה' });
-  if (row.last3 !== last3) return res.status(401).json({ error: 'הספרות האחרונות של הת"ז אינן נכונות' });
+
+  if (!row || row.last3 !== last3) {
+    const result = recordFailedAttempt(ip);
+    const remaining = MAX_ATTEMPTS - result.attempts;
+
+    if (result.blocked) {
+      return res.status(429).json({
+        error: `יותר מדי ניסיונות כושלים. נסה שוב בעוד ${result.minutesLeft} דקות`
+      });
+    }
+
+    const errorMsg = !row
+      ? `לא נמצא — בדוק שם פרטי ואות ראשונה של שם משפחה (נותרו ${remaining} ניסיונות)`
+      : `הספרות האחרונות של הת"ז אינן נכונות (נותרו ${remaining} ניסיונות)`;
+
+    return res.status(401).json({ error: errorMsg });
+  }
+
+  // Success — clear failed attempts
+  clearAttempts(ip);
   res.json({ name: row.name });
 });
+
+// ── Pages ─────────────────────────────────────────────────────
 
 app.get('/student', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student.html')));
 app.get('/login',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
