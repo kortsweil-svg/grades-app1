@@ -136,11 +136,11 @@ app.get('/api/teacher/check', async (req, res) => {
 });
 
 // ── Students ──────────────────────────────────────────────────
-function buildKey(fullName) {
+function buildKey(fullName, last3) {
   const parts = fullName.trim().split(/\s+/);
-  if (parts.length < 2) return null;
-  // שם משפחה (ראשון) + נקודה + אות ראשונה של שם פרטי (שני)
-  return `${parts[0]}.${parts[1][0]}`.toLowerCase();
+  if (parts.length < 1) return null;
+  // שם משפחה (ראשון) + 3 ספרות אחרונות של תז
+  return `${parts[0]}${last3}`.toLowerCase();
 }
 
 app.get('/api/students', auth, async (req, res) => {
@@ -155,7 +155,7 @@ app.post('/api/students', auth, async (req, res) => {
     const { name, last3, grade } = req.body;
     if (!name) return res.status(400).json({ error: 'חסר שם' });
     if (!last3 || !/^\d{3}$/.test(last3)) return res.status(400).json({ error: 'נא להזין 3 ספרות אחרונות של תז' });
-    const key = buildKey(name);
+    const key = buildKey(name, last3);
     if (!key) return res.status(400).json({ error: 'נא להזין שם פרטי ושם משפחה' });
     let gradeVal = null;
     if (grade !== null && grade !== undefined && grade !== '') {
@@ -203,22 +203,17 @@ app.delete('/api/students', auth, async (req, res) => {
 // ── Student grade lookup ──────────────────────────────────────
 app.post('/api/grade', async (req, res) => {
   try {
-    const ip    = getClientIp(req);
-    const key   = (req.body.key   || '').toLowerCase().trim();
-    const last3 = (req.body.last3 || '').trim();
+    const ip  = getClientIp(req);
+    const key = (req.body.key || '').toLowerCase().trim();
     const limit = await checkRateLimit(ip);
     if (!limit.allowed) return res.status(429).json({ error: `יותר מדי ניסיונות. נסה שוב בעוד ${limit.minutesLeft} דקות` });
-    if (!key)                   return res.status(400).json({ error: 'חסר מפתח כניסה' });
-    if (!/^\d{3}$/.test(last3)) return res.status(400).json({ error: 'נא להזין 3 ספרות בדיוק' });
-    const { rows } = await pool.query('SELECT name, last3, grade, grade_updated_at FROM students WHERE lookup_key = $1', [key]);
-    if (!rows.length || rows[0].last3 !== last3) {
+    if (!key || key.length < 4) return res.status(400).json({ error: 'נא להזין שם משפחה + 3 ספרות ת"ז' });
+    const { rows } = await pool.query('SELECT name, grade, grade_updated_at FROM students WHERE lookup_key = $1', [key]);
+    if (!rows.length) {
       const result = await recordFailedAttempt(ip);
       const remaining = MAX_ATTEMPTS - result.attempts;
       if (result.blocked) return res.status(429).json({ error: `יותר מדי ניסיונות. נסה שוב בעוד ${result.minutesLeft} דקות` });
-      const errorMsg = !rows.length
-        ? `לא נמצא — בדוק שם פרטי ואות ראשונה של שם משפחה (נותרו ${remaining} ניסיונות)`
-        : `הספרות האחרונות של הת"ז אינן נכונות (נותרו ${remaining} ניסיונות)`;
-      return res.status(401).json({ error: errorMsg });
+      return res.status(401).json({ error: `לא נמצא — בדוק שם משפחה ו-3 ספרות ת"ז (נותרו ${remaining} ניסיונות)` });
     }
     await clearAttempts(ip);
     res.json({ name: rows[0].name, grade: rows[0].grade, grade_updated_at: rows[0].grade_updated_at });

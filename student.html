@@ -247,20 +247,12 @@ header {
         <label>מפתח כניסה</label>
         <div class="input-wrap">
           <span class="input-icon">🔑</span>
-          <input type="text" id="s-key" placeholder="ישראלי.י" autocomplete="off" autocorrect="off" spellcheck="false">
+          <input type="text" id="s-key" placeholder="ישראלי503" autocomplete="off" autocorrect="off" spellcheck="false">
         </div>
-        <div class="field-note">שם משפחה + נקודה + אות ראשונה של שם פרטי</div>
+        <div class="field-note">שם משפחה + 3 ספרות אחרונות של ת"ז</div>
       </div>
 
-      <div class="divider"><span>ואימות זהות</span></div>
 
-      <div class="field">
-        <label>3 ספרות אחרונות ת"ז</label>
-        <div class="input-wrap">
-          <span class="input-icon">🪪</span>
-          <input type="text" id="s-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
-        </div>
-      </div>
 
       <button class="btn" id="check-btn" onclick="lookup()">בדוק ציון ←</button>
       <div id="msg"></div>
@@ -271,8 +263,8 @@ header {
 </main>
 
 <script>
-document.getElementById('s-key').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('s-last3').focus(); });
-document.getElementById('s-last3').addEventListener('keydown', e => { if(e.key==='Enter') lookup(); });
+document.getElementById('s-key').addEventListener('keydown', e => { if(e.key==='Enter') lookup(); });
+
 function formatDate(d) {
   if (!d) return '';
   const dt = new Date(d);
@@ -343,20 +335,20 @@ function buildResult(name, grade, updated_at) {
 
 async function lookup() {
   const key   = document.getElementById('s-key').value.trim();
-  const last3 = document.getElementById('s-last3').value.trim();
+
   const msgEl = document.getElementById('msg');
   const resEl = document.getElementById('result');
   msgEl.innerHTML = ''; resEl.innerHTML = '';
 
-  if (!key || !key.includes('.')) { msgEl.innerHTML='<div class="msg msg-err">פורמט: שם משפחה.אות שם פרטי — למשל ישראלי.י</div>'; return; }
-  if (!/^\d{3}$/.test(last3))     { msgEl.innerHTML='<div class="msg msg-err">נא להזין 3 ספרות אחרונות של ת"ז</div>'; return; }
+  if (!key || !key.includes('.')) { msgEl.innerHTML='<div class="msg msg-err">פורמט: שם משפחה + 3 ספרות ת"ז — למשל ישראלי503</div>'; return; }
+
 
   const btn = document.getElementById('check-btn');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> בודק...';
   try {
     const res = await fetch('/api/grade', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({key,last3})
+      body:JSON.stringify({key})
     });
     const data = await res.json();
     if (!res.ok) { msgEl.innerHTML=`<div class="msg msg-err">${data.error}</div>`; return; }
