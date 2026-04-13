@@ -321,7 +321,7 @@ header{
       <h3>גרור קובץ אקסל לכאן</h3>
       <p>או לחץ לבחירת קובץ מהמחשב</p>
       <button class="btn btn-green" onclick="event.stopPropagation();document.getElementById('file-input').click()">📁 בחר קובץ xlsx</button>
-      <div class="import-note">עמודות: <strong>שם פרטי | שם משפחה | 3 ספרות ת"ז | ציון</strong></div>
+      <div class="import-note">עמודות: <strong>שם פרטי | שם משפחה | ת"ז (מלאה או חלקית) | ציון</strong><br><span style='color:var(--green);font-size:11px'>🔒 התז מתקצרת אוטומטית ל-3 ספרות אחרונות בלבד</span></div>
     </div>
     <input type="file" id="file-input" class="file-input" accept=".xlsx,.xls,.csv">
     <div id="import-preview" style="display:none">
@@ -407,7 +407,7 @@ function handleFile(file) {
     if (raw.length && isNaN(String(raw[0][0]).trim()) && String(raw[0][0]).trim()) rows = raw.slice(1);
     parsedRows = rows.filter(r => r.some(c => String(c).trim())).map((r, i) => {
       const fn=String(r[0]||'').trim(), ln=String(r[1]||'').trim();
-      const l3=String(r[2]||'').trim().replace(/\D/g,'').padStart(3,'0').slice(-3);
+      const rawId=String(r[2]||'').trim().replace(/\D/g,''); const l3=rawId.slice(-3).padStart(3,'0');
       const gv=String(r[3]||'').trim();
       const g=gv===''?null:parseInt(gv);
       const errors=[];
@@ -451,14 +451,9 @@ async function confirmImport() {
   let added=0,skipped=0;
   for (const s of valid) {
     try {
-      const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name:s.name,last3:s.last3})});
+      const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name:s.name,last3:s.last3,grade:s.grade})});
       const data=await res.json();
       if(!res.ok){skipped++;continue;}
-      if(s.grade!==null){
-        const all=await fetch('/api/students',{headers:hdrs()}).then(r=>r.json());
-        const ns=all.find(x=>x.lookup_key===data.lookup_key);
-        if(ns) await fetch(`/api/students/${ns.id}/grade`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({grade:s.grade})});
-      }
       added++;
     } catch(e){skipped++;}
   }
@@ -561,15 +556,11 @@ async function addStudent() {
   const btn=document.getElementById('add-btn');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
   try {
-    const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name,last3})});
+    const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name,last3,grade:gv===''?null:+gv})});
     if(res.status===401){window.location.href='/login';return;}
     const data=await res.json();
     if(!res.ok) return showMsg(data.error||'שגיאה');
-    if(gv){
-      const all=await fetch('/api/students',{headers:hdrs()}).then(r=>r.json());
-      const ns=all.find(s=>s.lookup_key===data.lookup_key);
-      if(ns) await fetch(`/api/students/${ns.id}/grade`,{method:'PATCH',headers:hdrs(),body:JSON.stringify({grade:+gv})});
-    }
+    // grade already saved via POST
     document.getElementById('t-name').value='';
     document.getElementById('t-last3').value='';
     document.getElementById('t-grade').value='';
