@@ -343,14 +343,13 @@ async function lookup() {
   const resEl = document.getElementById('result');
   msgEl.innerHTML = ''; resEl.innerHTML = '';
 
-  if (!key || !key.includes('.')) { msgEl.innerHTML='<div class="msg msg-err">פורמט: שם משפחה + 3 ספרות ת"ז — למשל ישראלי503</div>'; return; }
+  if (!key || key.length < 4) { msgEl.innerHTML='<div class="msg msg-err">נא להזין שם משפחה + 3 ספרות ת"ז — למשל ישראלי503</div>'; return; }
 
 
   const btn = document.getElementById('check-btn');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> בודק...';
   try {
-    console.log('sending key:', JSON.stringify(key), 'length:', key.length, 'codes:', [...key].map(c=>c.charCodeAt(0)));
-    const res = await fetch('/api/grade', {
+      const res = await fetch('/api/grade', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({key})
     });
