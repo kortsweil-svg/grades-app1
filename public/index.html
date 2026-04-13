@@ -406,20 +406,30 @@ function handleFile(file) {
     let rows = raw;
     if (raw.length && isNaN(String(raw[0][0]).trim()) && String(raw[0][0]).trim()) rows = raw.slice(1);
     parsedRows = rows.filter(r => r.some(c => String(c).trim())).map((r, i) => {
-      // Support both: [שם מלא, תז, ציון] and [שם פרטי, שם משפחה, תז, ציון]
       let name, rawId, gv;
       const c0=String(r[0]||'').trim();
       const c1=String(r[1]||'').trim();
       const c2=String(r[2]||'').trim();
       const c3=String(r[3]||'').trim();
-      // If c1 looks like an ID (digits only) or c1 is empty → 3-column format: [שם מלא, תז, ציון]
-      const c1isId = /^\d+$/.test(c1.replace(/[-\s]/g,'')) && c1.replace(/\D/g,'').length >= 5;
-      if(c1isId || c1==='') {
-        name=c0; rawId=c1; gv=c2;
-      } else {
-        // 4-column: [שם פרטי, שם משפחה, תז, ציון]
-        name=c1 ? c0+' '+c1 : c0; rawId=c2; gv=c3;
+
+      // Case 1: c0 ends with digits (name + ID in same cell): "אבקסיס רפאל 925925925"
+      const embeddedId = c0.match(/^(.*?)\s+(\d{5,9})\s*$/);
+      if(embeddedId) {
+        name=embeddedId[1].trim(); rawId=embeddedId[2]; gv=c1;
       }
+      // Case 2: c1 is pure ID (digits)
+      else if(/^\d{5,9}$/.test(c1.replace(/\D/g,''))) {
+        name=c0; rawId=c1; gv=c2;
+      }
+      // Case 3: 4 columns [שם פרטי, שם משפחה, תז, ציון]
+      else if(c3!=='' && /^\d{5,9}$/.test(c2.replace(/\D/g,''))) {
+        name=c0+' '+c1; rawId=c2; gv=c3;
+      }
+      // Case 4: fallback - 3 cols [שם מלא, תז, ציון]
+      else {
+        name=c0; rawId=c1; gv=c2;
+      }
+
       const l3=rawId.replace(/\D/g,'').slice(-3).padStart(3,'0');
       const g=gv===''?null:parseInt(gv);
       const nameParts=name.trim().split(/\s+/);
