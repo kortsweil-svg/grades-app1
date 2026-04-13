@@ -1,4 +1,4 @@
-const CACHE = 'grades-v3';
+const CACHE = 'grades-v5';
 const ASSETS = ['/', '/student', '/login'];
 
 self.addEventListener('install', e => {
