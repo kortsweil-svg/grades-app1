@@ -238,7 +238,7 @@ header{
 .preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
 .preview-table th{background:var(--gray-100);padding:7px 10px;text-align:right;color:var(--gray-600);font-weight:600;border-bottom:1px solid var(--gray-200)}
 .preview-table td{padding:7px 10px;border-bottom:1px solid var(--gray-100)}
-.row-ok{color:var(--green)}.row-err{color:var(--red);background:var(--red-pale)}
+.row-ok{color:var(--green)}.row-err{color:var(--red);background:var(--red-pale)}.row-failed{color:var(--amber);background:var(--amber-pale);font-weight:600}
 .import-summary{font-size:13px;color:var(--gray-600);margin-bottom:10px}
 .import-summary span{font-weight:700;color:var(--gray-800)}
 
@@ -452,7 +452,7 @@ function showPreview() {
     `<span>${parsedRows.length}</span> שורות — <span style="color:var(--green)">${valid.length} תקינות</span>${bad.length?`, <span style="color:var(--red)">${bad.length} עם שגיאות (מסומנות באדום למטה)</span>`:''}`;
   document.getElementById('preview-wrap').innerHTML=`
     <table class="preview-table"><thead><tr><th>#</th><th>שם</th><th>3 ספרות</th><th>ציון</th><th>סטטוס</th></tr></thead>
-    <tbody>${parsedRows.map(r=>`<tr class="${r.errors.length?'row-err':'row-ok'}">
+    <tbody>${parsedRows.map((r,ri)=>`<tr class="${r.errors.length?'row-err':'row-ok'}" id="import-row-${ri}">
       <td>${r.row}</td><td>${esc(r.name)}</td><td>${esc(r.last3)}</td><td>${r.grade??'—'}</td>
       <td>${r.errors.length?r.errors.join(', '):'✓'}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('confirm-btn').disabled = !valid.length;
@@ -473,13 +473,25 @@ async function confirmImport() {
   const btn=document.getElementById('confirm-btn');
   btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> מייבא ${valid.length}...`;
   let added=0; const failed=[];
-  for (const s of valid) {
+  for (let i=0; i<parsedRows.length; i++) {
+    const s=parsedRows[i];
+    if(s.errors.length) continue;
     try {
       const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name:s.name,last3:s.last3,grade:s.grade})});
       const data=await res.json();
-      if(!res.ok){ failed.push({name:s.name, reason:data.error||'שגיאה'}); continue; }
+      if(!res.ok){
+        failed.push({name:s.name, reason:data.error||'שגיאה'});
+        // Highlight the failed row in the preview table
+        const row=document.getElementById('import-row-'+i);
+        if(row){ row.className='row-failed'; row.title=data.error||'שגיאה'; }
+        continue;
+      }
       added++;
-    } catch(e){ failed.push({name:s.name, reason:'שגיאת רשת'}); }
+    } catch(e){
+      failed.push({name:s.name, reason:'שגיאת רשת'});
+      const row=document.getElementById('import-row-'+i);
+      if(row) row.className='row-failed';
+    }
   }
   let msg=`<div class="msg msg-ok">✅ יובאו ${added} תלמידים</div>`;
   if(failed.length){
