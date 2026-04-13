@@ -238,7 +238,7 @@ header{
 .preview-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
 .preview-table th{background:var(--gray-100);padding:7px 10px;text-align:right;color:var(--gray-600);font-weight:600;border-bottom:1px solid var(--gray-200)}
 .preview-table td{padding:7px 10px;border-bottom:1px solid var(--gray-100)}
-.row-ok{color:var(--green)}.row-err{color:var(--red);background:var(--red-pale)}
+.row-ok{color:var(--green)}.row-err{color:var(--red);background:var(--red-pale)}.row-failed{color:var(--amber);background:var(--amber-pale);font-weight:600}
 .import-summary{font-size:13px;color:var(--gray-600);margin-bottom:10px}
 .import-summary span{font-weight:700;color:var(--gray-800)}
 
@@ -321,7 +321,7 @@ header{
       <h3>גרור קובץ אקסל לכאן</h3>
       <p>או לחץ לבחירת קובץ מהמחשב</p>
       <button class="btn btn-green" onclick="event.stopPropagation();document.getElementById('file-input').click()">📁 בחר קובץ xlsx</button>
-      <div class="import-note">עמודות: <strong>שם פרטי | שם משפחה | 3 ספרות ת"ז | ציון</strong></div>
+      <div class="import-note">פורמט 1: <strong>שם מלא | ת"ז | ציון</strong><br>פורמט 2: <strong>שם פרטי | שם משפחה | ת"ז | ציון</strong><br><span style='color:var(--green);font-size:11px'>🔒 התז מתקצרת אוטומטית ל-3 ספרות אחרונות</span></div>
     </div>
     <input type="file" id="file-input" class="file-input" accept=".xlsx,.xls,.csv">
     <div id="import-preview" style="display:none">
@@ -344,7 +344,7 @@ header{
       <div class="field">
         <label>שם מלא</label>
         <input type="text" id="t-name" placeholder="ישראל ישראלי" autocomplete="off">
-        <div class="hint">מפתח: שם.אות — למשל <strong>ישראל.י</strong></div>
+        <div class="hint">מפתח: שם משפחה.אות שם פרטי — למשל <strong>ישראלי.י</strong></div>
       </div>
       <div class="field">
         <label>3 ספרות ת"ז</label>
@@ -406,16 +406,40 @@ function handleFile(file) {
     let rows = raw;
     if (raw.length && isNaN(String(raw[0][0]).trim()) && String(raw[0][0]).trim()) rows = raw.slice(1);
     parsedRows = rows.filter(r => r.some(c => String(c).trim())).map((r, i) => {
-      const fn=String(r[0]||'').trim(), ln=String(r[1]||'').trim();
-      const l3=String(r[2]||'').trim().replace(/\D/g,'').padStart(3,'0').slice(-3);
-      const gv=String(r[3]||'').trim();
+      let name, rawId, gv;
+      const c0=String(r[0]||'').trim();
+      const c1=String(r[1]||'').trim();
+      const c2=String(r[2]||'').trim();
+      const c3=String(r[3]||'').trim();
+
+      // Case 1: c0 ends with digits (name + ID in same cell): "אבקסיס רפאל 925925925"
+      const embeddedId = c0.match(/^(.*?)\s+(\d{5,9})\s*$/);
+      if(embeddedId) {
+        name=embeddedId[1].trim(); rawId=embeddedId[2]; gv=c1;
+      }
+      // Case 2: c1 is pure ID (digits)
+      else if(/^\d{5,9}$/.test(c1.replace(/\D/g,''))) {
+        name=c0; rawId=c1; gv=c2;
+      }
+      // Case 3: 4 columns [שם פרטי, שם משפחה, תז, ציון]
+      else if(c3!=='' && /^\d{5,9}$/.test(c2.replace(/\D/g,''))) {
+        name=c0+' '+c1; rawId=c2; gv=c3;
+      }
+      // Case 4: fallback - 3 cols [שם מלא, תז, ציון]
+      else {
+        name=c0; rawId=c1; gv=c2;
+      }
+
+      const l3=rawId.replace(/\D/g,'').slice(-3).padStart(3,'0');
       const g=gv===''?null:parseInt(gv);
+      const nameParts=name.trim().split(/\s+/);
       const errors=[];
-      if(!fn) errors.push('חסר שם פרטי');
-      if(!ln) errors.push('חסר שם משפחה');
+      if(!name) errors.push('חסר שם');
+      if(nameParts.length<2) errors.push('נא שם פרטי ומשפחה');
       if(!/^\d{3}$/.test(l3)) errors.push('3 ספרות שגויות');
       if(gv&&(isNaN(g)||g<0||g>100)) errors.push('ציון לא תקין');
-      return {name:fn&&ln?`${fn} ${ln}`:fn||ln,last3:l3,grade:g,key:fn&&ln?`${fn}.${ln[0]}`.toLowerCase():'',errors,row:i+2};
+      const key=nameParts.length>=2?`${nameParts[nameParts.length-1]}.${nameParts[0][0]}`.toLowerCase():'';
+      return {name:name.trim(),last3:l3,grade:g,key,errors,row:i+2};
     });
     showPreview();
   };
@@ -425,10 +449,10 @@ function handleFile(file) {
 function showPreview() {
   const valid=parsedRows.filter(r=>!r.errors.length), bad=parsedRows.filter(r=>r.errors.length);
   document.getElementById('import-summary').innerHTML=
-    `<span>${parsedRows.length}</span> שורות — <span style="color:var(--green)">${valid.length} תקינות</span>${bad.length?`, <span style="color:var(--red)">${bad.length} שגיאות</span>`:''}`;
+    `<span>${parsedRows.length}</span> שורות — <span style="color:var(--green)">${valid.length} תקינות</span>${bad.length?`, <span style="color:var(--red)">${bad.length} עם שגיאות (מסומנות באדום למטה)</span>`:''}`;
   document.getElementById('preview-wrap').innerHTML=`
     <table class="preview-table"><thead><tr><th>#</th><th>שם</th><th>3 ספרות</th><th>ציון</th><th>סטטוס</th></tr></thead>
-    <tbody>${parsedRows.slice(0,15).map(r=>`<tr class="${r.errors.length?'row-err':'row-ok'}">
+    <tbody>${parsedRows.map((r,ri)=>`<tr class="${r.errors.length?'row-err':'row-ok'}" id="import-row-${ri}">
       <td>${r.row}</td><td>${esc(r.name)}</td><td>${esc(r.last3)}</td><td>${r.grade??'—'}</td>
       <td>${r.errors.length?r.errors.join(', '):'✓'}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('confirm-btn').disabled = !valid.length;
@@ -448,19 +472,34 @@ async function confirmImport() {
   const valid=parsedRows.filter(r=>!r.errors.length);
   const btn=document.getElementById('confirm-btn');
   btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> מייבא ${valid.length}...`;
-  let added=0,skipped=0;
-  for (const s of valid) {
+  let added=0; const failed=[];
+  for (let i=0; i<parsedRows.length; i++) {
+    const s=parsedRows[i];
+    if(s.errors.length) continue;
     try {
       const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name:s.name,last3:s.last3,grade:s.grade})});
       const data=await res.json();
-      if(!res.ok){skipped++;continue;}
+      if(!res.ok){
+        failed.push({name:s.name, reason:data.error||'שגיאה'});
+        // Highlight the failed row in the preview table
+        const row=document.getElementById('import-row-'+i);
+        if(row){ row.className='row-failed'; row.title=data.error||'שגיאה'; }
+        continue;
+      }
       added++;
-    } catch(e){skipped++;}
+    } catch(e){
+      failed.push({name:s.name, reason:'שגיאת רשת'});
+      const row=document.getElementById('import-row-'+i);
+      if(row) row.className='row-failed';
+    }
   }
-  document.getElementById('import-msg').innerHTML=`<div class="msg msg-ok">✅ יובאו ${added} תלמידים${skipped?` | ${skipped} דולגו`:''}</div>`;
+  let msg=`<div class="msg msg-ok">✅ יובאו ${added} תלמידים</div>`;
+  if(failed.length){
+    msg+=`<div class="msg msg-warn" style="margin-top:8px">⚠️ ${failed.length} לא יובאו:<br>${failed.map(f=>`• ${esc(f.name)} — ${esc(f.reason)}`).join('<br>')}</div>`;
+  }
+  document.getElementById('import-msg').innerHTML=msg;
   btn.disabled=false; btn.innerHTML='✅ ייבא תלמידים';
   loadStudents();
-  setTimeout(cancelImport,3000);
 }
 
 function copyLink() {

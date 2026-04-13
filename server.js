@@ -137,7 +137,8 @@ app.get('/api/teacher/check', async (req, res) => {
 function buildKey(fullName) {
   const parts = fullName.trim().split(/\s+/);
   if (parts.length < 2) return null;
-  return `${parts[0]}.${parts[parts.length - 1][0]}`.toLowerCase();
+  // שם משפחה (אחרון) + נקודה + אות ראשונה של שם פרטי (ראשון)
+  return `${parts[parts.length - 1]}.${parts[0][0]}`.toLowerCase();
 }
 
 app.get('/api/students', auth, async (req, res) => {
