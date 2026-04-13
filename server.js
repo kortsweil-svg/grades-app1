@@ -7,9 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:A13!039097518@db.mwwxzuivtqqtbxrdsyho.supabase.co:5432/postgres',
-  ssl: { rejectUnauthorized: false },
-  family: 4
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres.mwwxzuivtqqtbxrdsyho:A13!039097518@aws-0-eu-west-1.pooler.supabase.com:6543/postgres',
+  ssl: { rejectUnauthorized: false }
 });
 
 async function initDB() {
