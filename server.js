@@ -19,8 +19,10 @@ async function initDB() {
       lookup_key TEXT NOT NULL UNIQUE,
       last3 TEXT NOT NULL,
       grade INTEGER DEFAULT NULL,
+      grade_updated_at TIMESTAMPTZ DEFAULT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+    ALTER TABLE students ADD COLUMN IF NOT EXISTS grade_updated_at TIMESTAMPTZ DEFAULT NULL;
     CREATE TABLE IF NOT EXISTS teacher_credentials (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       id_number TEXT NOT NULL,
@@ -143,7 +145,7 @@ function buildKey(fullName) {
 
 app.get('/api/students', auth, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, name, lookup_key, last3, grade FROM students ORDER BY created_at DESC');
+    const { rows } = await pool.query('SELECT id, name, lookup_key, last3, grade, grade_updated_at FROM students ORDER BY created_at DESC');
     res.json(rows);
   } catch(e) { res.status(500).json({ error: 'שגיאה' }); }
 });
@@ -172,12 +174,12 @@ app.patch('/api/students/:id/grade', auth, async (req, res) => {
   try {
     const grade = req.body.grade;
     if (grade === null || grade === undefined || grade === '') {
-      await pool.query('UPDATE students SET grade = NULL WHERE id = $1', [req.params.id]);
+      await pool.query('UPDATE students SET grade = NULL, grade_updated_at = NULL WHERE id = $1', [req.params.id]);
       return res.json({ ok: true });
     }
     const g = parseInt(grade);
     if (isNaN(g) || g < 0 || g > 100) return res.status(400).json({ error: 'ציון חייב להיות בין 0 ל-100' });
-    const { rowCount } = await pool.query('UPDATE students SET grade = $1 WHERE id = $2', [g, req.params.id]);
+    const { rowCount } = await pool.query('UPDATE students SET grade = $1, grade_updated_at = NOW() WHERE id = $2', [g, req.params.id]);
     if (rowCount === 0) return res.status(404).json({ error: 'לא נמצא' });
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'שגיאה' }); }
@@ -208,7 +210,7 @@ app.post('/api/grade', async (req, res) => {
     if (!limit.allowed) return res.status(429).json({ error: `יותר מדי ניסיונות. נסה שוב בעוד ${limit.minutesLeft} דקות` });
     if (!key)                   return res.status(400).json({ error: 'חסר מפתח כניסה' });
     if (!/^\d{3}$/.test(last3)) return res.status(400).json({ error: 'נא להזין 3 ספרות בדיוק' });
-    const { rows } = await pool.query('SELECT name, last3, grade FROM students WHERE lookup_key = $1', [key]);
+    const { rows } = await pool.query('SELECT name, last3, grade, grade_updated_at FROM students WHERE lookup_key = $1', [key]);
     if (!rows.length || rows[0].last3 !== last3) {
       const result = await recordFailedAttempt(ip);
       const remaining = MAX_ATTEMPTS - result.attempts;
@@ -219,7 +221,7 @@ app.post('/api/grade', async (req, res) => {
       return res.status(401).json({ error: errorMsg });
     }
     await clearAttempts(ip);
-    res.json({ name: rows[0].name, grade: rows[0].grade });
+    res.json({ name: rows[0].name, grade: rows[0].grade, grade_updated_at: rows[0].grade_updated_at });
   } catch(e) { res.status(500).json({ error: 'שגיאה בשרת' }); }
 });
 

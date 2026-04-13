@@ -2,6 +2,13 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563EB">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ציונים">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת ציונים — בדיקת ציון</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -266,9 +273,25 @@ header {
 <script>
 document.getElementById('s-key').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('s-last3').focus(); });
 document.getElementById('s-last3').addEventListener('keydown', e => { if(e.key==='Enter') lookup(); });
+function formatDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('he-IL', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function buildResult(name, grade) {
+function formatDate(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function formatDate(d) {
+  if(!d) return null;
+  const dt = new Date(d);
+  return dt.toLocaleDateString('he-IL', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function buildResult(name, grade, updated_at) {
   const has = grade !== null && grade !== undefined;
   const passing = has && grade >= 55;
   const cls = has ? (passing ? 'pass' : 'fail') : 'none';
@@ -311,6 +334,9 @@ function buildResult(name, grade) {
     </div>
     ${gradeHtml}
     ${statusHtml}
+    ${updated_at ? `<div class="footer-note" style="margin-bottom:6px">עודכן לאחרונה: ${formatDate(updated_at)}</div>` : ''}
+    ${data.grade_updated_at ? `<div style="font-size:12px;color:var(--gray-400);text-align:center;margin-top:8px">עודכן לאחרונה: ${formatDate(data.grade_updated_at)}</div>` : ''}
+    ${data.grade_updated_at ? `<div style="font-size:12px;color:var(--gray-400);text-align:center;margin-top:8px">עודכן לאחרונה: ${formatDate(data.grade_updated_at)}</div>` : ''}
     <div class="footer-note">לפרטים נוספים פנה למורה</div>
   </div>`;
 }
@@ -334,13 +360,16 @@ async function lookup() {
     });
     const data = await res.json();
     if (!res.ok) { msgEl.innerHTML=`<div class="msg msg-err">${data.error}</div>`; return; }
-    resEl.innerHTML = buildResult(data.name, data.grade);
+    resEl.innerHTML = buildResult(data.name, data.grade, data.updated_at);
   } catch(e) {
     msgEl.innerHTML='<div class="msg msg-err">שגיאת רשת — נסה שוב</div>';
   } finally {
     btn.disabled=false; btn.textContent='בדוק ציון ←';
   }
 }
+</script>
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 </script>
 </body>
 </html>
