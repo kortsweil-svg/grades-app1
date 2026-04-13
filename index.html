@@ -461,7 +461,7 @@ function handleFile(file) {
       if(nameParts.length<2) errors.push('נא שם פרטי ומשפחה');
       if(!/^\d{3}$/.test(l3)) errors.push('3 ספרות שגויות');
       if(gv&&(isNaN(g)||g<0||g>100)) errors.push('ציון לא תקין');
-      const key=nameParts.length>=2?`${nameParts[nameParts.length-1]}.${nameParts[0][0]}`.toLowerCase():'';
+      const key=nameParts.length>=2?`${nameParts[0]}.${nameParts[1][0]}`.toLowerCase():'';
       return {name:name.trim(),last3:l3,grade:g,key,errors,row:i+2};
     });
     showPreview();
