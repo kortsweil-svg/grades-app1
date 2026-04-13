@@ -349,7 +349,8 @@ async function lookup() {
   const btn = document.getElementById('check-btn');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> בודק...';
   try {
-      const res = await fetch('/api/grade', {
+    console.log('sending key:', JSON.stringify(key), 'length:', key.length, 'codes:', [...key].map(c=>c.charCodeAt(0)));
+    const res = await fetch('/api/grade', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({key})
     });
