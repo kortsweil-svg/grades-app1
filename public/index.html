@@ -321,7 +321,7 @@ header{
       <h3>גרור קובץ אקסל לכאן</h3>
       <p>או לחץ לבחירת קובץ מהמחשב</p>
       <button class="btn btn-green" onclick="event.stopPropagation();document.getElementById('file-input').click()">📁 בחר קובץ xlsx</button>
-      <div class="import-note">עמודות: <strong>שם פרטי | שם משפחה | ת"ז (מלאה או חלקית) | ציון</strong><br><span style='color:var(--green);font-size:11px'>🔒 התז מתקצרת אוטומטית ל-3 ספרות אחרונות בלבד</span></div>
+      <div class="import-note">פורמט 1: <strong>שם מלא | ת"ז | ציון</strong><br>פורמט 2: <strong>שם פרטי | שם משפחה | ת"ז | ציון</strong><br><span style='color:var(--green);font-size:11px'>🔒 התז מתקצרת אוטומטית ל-3 ספרות אחרונות</span></div>
     </div>
     <input type="file" id="file-input" class="file-input" accept=".xlsx,.xls,.csv">
     <div id="import-preview" style="display:none">
@@ -406,16 +406,30 @@ function handleFile(file) {
     let rows = raw;
     if (raw.length && isNaN(String(raw[0][0]).trim()) && String(raw[0][0]).trim()) rows = raw.slice(1);
     parsedRows = rows.filter(r => r.some(c => String(c).trim())).map((r, i) => {
-      const fn=String(r[0]||'').trim(), ln=String(r[1]||'').trim();
-      const rawId=String(r[2]||'').trim().replace(/\D/g,''); const l3=rawId.slice(-3).padStart(3,'0');
-      const gv=String(r[3]||'').trim();
+      // Support both: [שם מלא, תז, ציון] and [שם פרטי, שם משפחה, תז, ציון]
+      let name, rawId, gv;
+      const c0=String(r[0]||'').trim();
+      const c1=String(r[1]||'').trim();
+      const c2=String(r[2]||'').trim();
+      const c3=String(r[3]||'').trim();
+      // If c1 looks like an ID (digits only) or c1 is empty → 3-column format: [שם מלא, תז, ציון]
+      const c1isId = /^\d+$/.test(c1.replace(/[-\s]/g,'')) && c1.replace(/\D/g,'').length >= 5;
+      if(c1isId || c1==='') {
+        name=c0; rawId=c1; gv=c2;
+      } else {
+        // 4-column: [שם פרטי, שם משפחה, תז, ציון]
+        name=c1 ? c0+' '+c1 : c0; rawId=c2; gv=c3;
+      }
+      const l3=rawId.replace(/\D/g,'').slice(-3).padStart(3,'0');
       const g=gv===''?null:parseInt(gv);
+      const nameParts=name.trim().split(/\s+/);
       const errors=[];
-      if(!fn) errors.push('חסר שם פרטי');
-      if(!ln) errors.push('חסר שם משפחה');
+      if(!name) errors.push('חסר שם');
+      if(nameParts.length<2) errors.push('נא שם פרטי ומשפחה');
       if(!/^\d{3}$/.test(l3)) errors.push('3 ספרות שגויות');
       if(gv&&(isNaN(g)||g<0||g>100)) errors.push('ציון לא תקין');
-      return {name:fn&&ln?`${fn} ${ln}`:fn||ln,last3:l3,grade:g,key:fn&&ln?`${fn}.${ln[0]}`.toLowerCase():'',errors,row:i+2};
+      const key=nameParts.length>=2?`${nameParts[0]}.${nameParts[nameParts.length-1][0]}`.toLowerCase():'';
+      return {name:name.trim(),last3:l3,grade:g,key,errors,row:i+2};
     });
     showPreview();
   };
