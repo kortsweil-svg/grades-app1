@@ -449,10 +449,10 @@ function handleFile(file) {
 function showPreview() {
   const valid=parsedRows.filter(r=>!r.errors.length), bad=parsedRows.filter(r=>r.errors.length);
   document.getElementById('import-summary').innerHTML=
-    `<span>${parsedRows.length}</span> שורות — <span style="color:var(--green)">${valid.length} תקינות</span>${bad.length?`, <span style="color:var(--red)">${bad.length} שגיאות</span>`:''}`;
+    `<span>${parsedRows.length}</span> שורות — <span style="color:var(--green)">${valid.length} תקינות</span>${bad.length?`, <span style="color:var(--red)">${bad.length} עם שגיאות (מסומנות באדום למטה)</span>`:''}`;
   document.getElementById('preview-wrap').innerHTML=`
     <table class="preview-table"><thead><tr><th>#</th><th>שם</th><th>3 ספרות</th><th>ציון</th><th>סטטוס</th></tr></thead>
-    <tbody>${parsedRows.slice(0,15).map(r=>`<tr class="${r.errors.length?'row-err':'row-ok'}">
+    <tbody>${parsedRows.map(r=>`<tr class="${r.errors.length?'row-err':'row-ok'}">
       <td>${r.row}</td><td>${esc(r.name)}</td><td>${esc(r.last3)}</td><td>${r.grade??'—'}</td>
       <td>${r.errors.length?r.errors.join(', '):'✓'}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('confirm-btn').disabled = !valid.length;
