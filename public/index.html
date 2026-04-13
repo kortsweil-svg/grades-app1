@@ -472,19 +472,22 @@ async function confirmImport() {
   const valid=parsedRows.filter(r=>!r.errors.length);
   const btn=document.getElementById('confirm-btn');
   btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> מייבא ${valid.length}...`;
-  let added=0,skipped=0;
+  let added=0; const failed=[];
   for (const s of valid) {
     try {
       const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name:s.name,last3:s.last3,grade:s.grade})});
       const data=await res.json();
-      if(!res.ok){skipped++;continue;}
+      if(!res.ok){ failed.push({name:s.name, reason:data.error||'שגיאה'}); continue; }
       added++;
-    } catch(e){skipped++;}
+    } catch(e){ failed.push({name:s.name, reason:'שגיאת רשת'}); }
   }
-  document.getElementById('import-msg').innerHTML=`<div class="msg msg-ok">✅ יובאו ${added} תלמידים${skipped?` | ${skipped} דולגו`:''}</div>`;
+  let msg=`<div class="msg msg-ok">✅ יובאו ${added} תלמידים</div>`;
+  if(failed.length){
+    msg+=`<div class="msg msg-warn" style="margin-top:8px">⚠️ ${failed.length} לא יובאו:<br>${failed.map(f=>`• ${esc(f.name)} — ${esc(f.reason)}`).join('<br>')}</div>`;
+  }
+  document.getElementById('import-msg').innerHTML=msg;
   btn.disabled=false; btn.innerHTML='✅ ייבא תלמידים';
   loadStudents();
-  setTimeout(cancelImport,3000);
 }
 
 function copyLink() {
