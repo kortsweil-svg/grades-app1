@@ -2,6 +2,13 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563EB">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ציונים">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מערכת ציונים — בדיקת ציון</title>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -240,20 +247,12 @@ header {
         <label>מפתח כניסה</label>
         <div class="input-wrap">
           <span class="input-icon">🔑</span>
-          <input type="text" id="s-key" placeholder="ישראל.י" autocomplete="off" autocorrect="off" spellcheck="false">
+          <input type="text" id="s-key" placeholder="ישראלי503" autocomplete="off" autocorrect="off" spellcheck="false">
         </div>
-        <div class="field-note">שם פרטי + נקודה + אות ראשונה של שם משפחה</div>
+        <div class="field-note">שם משפחה + 3 ספרות אחרונות של ת"ז</div>
       </div>
 
-      <div class="divider"><span>ואימות זהות</span></div>
 
-      <div class="field">
-        <label>3 ספרות אחרונות ת"ז</label>
-        <div class="input-wrap">
-          <span class="input-icon">🪪</span>
-          <input type="text" id="s-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
-        </div>
-      </div>
 
       <button class="btn" id="check-btn" onclick="lookup()">בדוק ציון ←</button>
       <div id="msg"></div>
@@ -264,11 +263,27 @@ header {
 </main>
 
 <script>
-document.getElementById('s-key').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('s-last3').focus(); });
-document.getElementById('s-last3').addEventListener('keydown', e => { if(e.key==='Enter') lookup(); });
+document.getElementById('s-key').addEventListener('keydown', e => { if(e.key==='Enter') lookup(); });
+
+function formatDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('he-IL', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function buildResult(name, grade) {
+function formatDate(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function formatDate(d) {
+  if(!d) return null;
+  const dt = new Date(d);
+  return dt.toLocaleDateString('he-IL', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function buildResult(name, grade, updated_at) {
   const has = grade !== null && grade !== undefined;
   const passing = has && grade >= 55;
   const cls = has ? (passing ? 'pass' : 'fail') : 'none';
@@ -311,35 +326,46 @@ function buildResult(name, grade) {
     </div>
     ${gradeHtml}
     ${statusHtml}
+    ${updated_at ? `<div class="footer-note" style="margin-bottom:6px">עודכן לאחרונה: ${formatDate(updated_at)}</div>` : ''}
+    ${data.grade_updated_at ? `<div style="font-size:12px;color:var(--gray-400);text-align:center;margin-top:8px">עודכן לאחרונה: ${formatDate(data.grade_updated_at)}</div>` : ''}
+    ${data.grade_updated_at ? `<div style="font-size:12px;color:var(--gray-400);text-align:center;margin-top:8px">עודכן לאחרונה: ${formatDate(data.grade_updated_at)}</div>` : ''}
     <div class="footer-note">לפרטים נוספים פנה למורה</div>
   </div>`;
 }
 
 async function lookup() {
   const key   = document.getElementById('s-key').value.trim();
-  const last3 = document.getElementById('s-last3').value.trim();
+
   const msgEl = document.getElementById('msg');
   const resEl = document.getElementById('result');
   msgEl.innerHTML = ''; resEl.innerHTML = '';
 
-  if (!key || !key.includes('.')) { msgEl.innerHTML='<div class="msg msg-err">פורמט: שם.אות — למשל ישראל.י</div>'; return; }
-  if (!/^\d{3}$/.test(last3))     { msgEl.innerHTML='<div class="msg msg-err">נא להזין 3 ספרות אחרונות של ת"ז</div>'; return; }
+  if (!key || !key.includes('.')) { msgEl.innerHTML='<div class="msg msg-err">פורמט: שם משפחה + 3 ספרות ת"ז — למשל ישראלי503</div>'; return; }
+
 
   const btn = document.getElementById('check-btn');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> בודק...';
   try {
     const res = await fetch('/api/grade', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({key,last3})
+      body:JSON.stringify({key})
     });
     const data = await res.json();
     if (!res.ok) { msgEl.innerHTML=`<div class="msg msg-err">${data.error}</div>`; return; }
-    resEl.innerHTML = buildResult(data.name, data.grade);
+    resEl.innerHTML = buildResult(data.name, data.grade, data.updated_at);
   } catch(e) {
     msgEl.innerHTML='<div class="msg msg-err">שגיאת רשת — נסה שוב</div>';
   } finally {
     btn.disabled=false; btn.textContent='בדוק ציון ←';
   }
+}
+</script>
+
+<script>
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => r.unregister());
+  });
 }
 </script>
 </body>
