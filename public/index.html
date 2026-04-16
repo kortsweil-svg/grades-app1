@@ -238,6 +238,11 @@ header{
 
 /* empty */
 .empty-state{text-align:center;padding:3rem 1rem}
+.group-header{font-size:15px;font-weight:700;padding:1rem 0 0.6rem;margin-top:1rem;border-bottom:2px solid;display:flex;align-items:center;gap:8px;margin-bottom:1rem}
+.group-header:first-child{margin-top:0}
+.group-pass{color:var(--green);border-color:var(--green-border)}
+.group-fail{color:var(--red);border-color:var(--red-border)}
+.group-none{color:var(--gray-500);border-color:var(--gray-200)}
 .empty-icon{font-size:56px;margin-bottom:12px;display:block;opacity:.4}
 .empty-text{font-size:14px;color:var(--gray-400);font-weight:500}
 
@@ -571,7 +576,7 @@ function renderStudents(students) {
     return;
   }
 
-  const cards = students.map(s => {
+  function makeCard(s) {
     const has = s.grade!==null&&s.grade!==undefined;
     const pass = has && s.grade>=55;
     const cls = has?(pass?'sc-pass':'sc-fail'):'sc-none';
@@ -605,9 +610,28 @@ function renderStudents(students) {
         <button class="del-btn" onclick="del(${s.id},this)" title="מחק">🗑️</button>
       </div>
     </div>`;
-  }).join('');
+  }
 
-  document.getElementById('students-wrap').innerHTML=`<div class="students-grid">${cards}</div>`;
+  const passing = students.filter(s => s.grade!==null && s.grade!==undefined && s.grade>=55);
+  const failing = students.filter(s => s.grade!==null && s.grade!==undefined && s.grade<55);
+  const noGrade = students.filter(s => s.grade===null || s.grade===undefined);
+
+  let html = '';
+
+  if (passing.length) {
+    html += `<div class="group-header group-pass">✅ עוברים (${passing.length})</div>`;
+    html += `<div class="students-grid">${passing.map(makeCard).join('')}</div>`;
+  }
+  if (failing.length) {
+    html += `<div class="group-header group-fail">❌ לא עוברים (${failing.length})</div>`;
+    html += `<div class="students-grid">${failing.map(makeCard).join('')}</div>`;
+  }
+  if (noGrade.length) {
+    html += `<div class="group-header group-none">📋 ללא ציון (${noGrade.length})</div>`;
+    html += `<div class="students-grid">${noGrade.map(makeCard).join('')}</div>`;
+  }
+
+  document.getElementById('students-wrap').innerHTML = html;
 }
 
 async function addStudent() {
