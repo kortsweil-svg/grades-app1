@@ -243,6 +243,32 @@ header{
 .group-pass{color:var(--green);border-color:var(--green-border)}
 .group-fail{color:var(--red);border-color:var(--red-border)}
 .group-none{color:var(--gray-500);border-color:var(--gray-200)}
+
+.students-list{display:flex;flex-direction:column;gap:0}
+.student-row{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 14px;
+  background:var(--white);
+  border-bottom:1px solid var(--gray-100);
+  transition:background .15s;
+}
+.student-row:last-child{border-bottom:none}
+.student-row:hover{background:var(--gray-50)}
+.student-row.sc-pass{border-right:3px solid var(--green)}
+.student-row.sc-fail{border-right:3px solid var(--red)}
+.student-row.sc-none{border-right:3px solid var(--gray-200)}
+.sr-avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--white);flex-shrink:0;
+}
+.sr-name{flex:1;min-width:0}
+.sr-name-text{font-size:14px;font-weight:600;color:var(--gray-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-key{font-size:11px;color:var(--gray-400);margin-top:1px}
+.sr-grade{min-width:50px;text-align:center}
+.sr-grade .grade-big{font-size:22px}
+.sr-edit{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.sr-edit .grade-input{width:60px}
 .empty-icon{font-size:56px;margin-bottom:12px;display:block;opacity:.4}
 .empty-text{font-size:14px;color:var(--gray-400);font-weight:500}
 
@@ -586,29 +612,18 @@ function renderStudents(students) {
       : `<span class="grade-status-badge gsb-none">ללא ציון</span>`;
     const av = avatarColor(s.name);
     const init = initials(s.name);
-    return `<div class="student-card ${cls}" id="sc-${s.id}">
-      <div class="sc-top">
-        <div class="sc-avatar" style="background:linear-gradient(135deg,${av},${av}cc)">${esc(init)}</div>
-        <div class="sc-info">
-          <div class="sc-name">${esc(s.name)}</div>
-          <div class="sc-key">${esc(s.lookup_key)}</div>
-        </div>
+    return `<div class="student-row ${cls}" id="sc-${s.id}">
+      <div class="sr-avatar" style="background:linear-gradient(135deg,${av},${av}cc)">${esc(init)}</div>
+      <div class="sr-name">
+        <div class="sr-name-text">${esc(s.name)}</div>
+        <div class="sr-key">${esc(s.lookup_key)}${s.grade_updated_at ? ` · עודכן ${formatDate(s.grade_updated_at)}` : ''}</div>
       </div>
-      <div class="sc-grade-row">
-        ${gradeNum}
-        ${badge}
-      </div>
-      <div class="sc-edit">
-        <input class="grade-input" type="number" id="gi-${s.id}" min="0" max="100" value="${s.grade??''}" placeholder="הזן ציון 0–100">
+      <div class="sr-grade">${gradeNum}</div>
+      <div class="sr-edit">
+        <input class="grade-input" type="number" id="gi-${s.id}" min="0" max="100" value="${s.grade??''}" placeholder="ציון">
         <button class="save-btn" onclick="saveGrade(${s.id})">שמור</button>
       </div>
-      <div class="sc-footer">
-        <div>
-          <span class="sc-id">***${esc(s.last3)}</span>
-          ${s.grade_updated_at ? `<span style="font-size:10px;color:var(--gray-400);display:block;margin-top:2px">עודכן: ${formatDate(s.grade_updated_at)}</span>` : ''}
-        </div>
-        <button class="del-btn" onclick="del(${s.id},this)" title="מחק">🗑️</button>
-      </div>
+      <button class="del-btn" onclick="del(${s.id},this)" title="מחק">🗑️</button>
     </div>`;
   }
 
@@ -620,15 +635,15 @@ function renderStudents(students) {
 
   if (passing.length) {
     html += `<div class="group-header group-pass">✅ עוברים (${passing.length})</div>`;
-    html += `<div class="students-grid">${passing.map(makeCard).join('')}</div>`;
+    html += `<div class="students-list">${passing.map(makeCard).join('')}</div>`;
   }
   if (failing.length) {
     html += `<div class="group-header group-fail">❌ לא עוברים (${failing.length})</div>`;
-    html += `<div class="students-grid">${failing.map(makeCard).join('')}</div>`;
+    html += `<div class="students-list">${failing.map(makeCard).join('')}</div>`;
   }
   if (noGrade.length) {
     html += `<div class="group-header group-none">📋 ללא ציון (${noGrade.length})</div>`;
-    html += `<div class="students-grid">${noGrade.map(makeCard).join('')}</div>`;
+    html += `<div class="students-list">${noGrade.map(makeCard).join('')}</div>`;
   }
 
   document.getElementById('students-wrap').innerHTML = html;
