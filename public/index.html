@@ -627,9 +627,10 @@ function renderStudents(students) {
     </div>`;
   }
 
-  const passing = students.filter(s => s.grade!==null && s.grade!==undefined && s.grade>=55);
-  const failing = students.filter(s => s.grade!==null && s.grade!==undefined && s.grade<55);
-  const noGrade = students.filter(s => s.grade===null || s.grade===undefined);
+  const sortByName = arr => arr.sort((a,b) => a.name.localeCompare(b.name, 'he'));
+  const passing = sortByName(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade>=55));
+  const failing = sortByName(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade<55));
+  const noGrade = sortByName(students.filter(s => s.grade===null || s.grade===undefined));
 
   let html = '';
 
