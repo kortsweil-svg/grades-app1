@@ -404,7 +404,10 @@ header{
   <div class="card">
     <div class="section-header">
       <div class="section-title">🎓 <span>תלמידים (<span id="count">0</span>)</span></div>
-      <button class="btn btn-danger" id="clear-btn" onclick="clearAll()" style="display:none;font-size:12px;padding:7px 14px">🗑️ מחק הכל</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" id="export-btn" onclick="exportExcel()" style="display:none;font-size:12px;padding:7px 14px">📥 ייצא לאקסל</button>
+        <button class="btn btn-danger" id="clear-btn" onclick="clearAll()" style="display:none;font-size:12px;padding:7px 14px">🗑️ מחק הכל</button>
+      </div>
     </div>
     <div id="students-wrap">
       <div class="empty-state"><span class="empty-icon">📭</span><div class="empty-text">טוען...</div></div>
@@ -590,12 +593,14 @@ async function loadStudents() {
 }
 
 function renderStudents(students) {
+  window._allStudents = students;
   document.getElementById('count').textContent=students.length;
   document.getElementById('stat-total').textContent=students.length;
   const gr=students.filter(s=>s.grade!==null&&s.grade!==undefined);
   document.getElementById('stat-graded').textContent=gr.length;
   document.getElementById('stat-pass').textContent=gr.filter(s=>s.grade>=55).length;
   document.getElementById('clear-btn').style.display=students.length?'inline-block':'none';
+  document.getElementById('export-btn').style.display=students.length?'inline-block':'none';
 
   if(!students.length) {
     document.getElementById('students-wrap').innerHTML='<div class="empty-state"><span class="empty-icon">🎓</span><div class="empty-text">אין תלמידים עדיין — הוסף את הראשון!</div></div>';
@@ -691,6 +696,22 @@ async function del(id,el){
   el.disabled=true;
   await fetch(`/api/students/${id}`,{method:'DELETE',headers:hdrs()});
   loadStudents();
+}
+
+function exportExcel() {
+  if (!window._allStudents || !window._allStudents.length) return;
+  const rows = window._allStudents.map(s => ({
+    'שם מלא': s.name,
+    'מפתח כניסה': s.lookup_key,
+    'ציון': s.grade ?? '',
+    'סטטוס': s.grade === null || s.grade === undefined ? 'ללא ציון' : s.grade >= 55 ? 'עובר' : 'לא עובר',
+    'עודכן': s.grade_updated_at ? formatDate(s.grade_updated_at) : ''
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows, { header: ['שם מלא','מפתח כניסה','ציון','סטטוס','עודכן'] });
+  ws['!cols'] = [{wch:22},{wch:16},{wch:8},{wch:10},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws, 'ציונים');
+  XLSX.writeFile(wb, 'ציונים.xlsx');
 }
 
 async function clearAll(){
