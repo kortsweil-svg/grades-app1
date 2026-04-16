@@ -700,16 +700,25 @@ async function del(id,el){
 
 function exportExcel() {
   if (!window._allStudents || !window._allStudents.length) return;
-  const rows = window._allStudents.map(s => ({
-    'שם מלא': s.name,
-    'מפתח כניסה': s.lookup_key,
-    'ציון': s.grade ?? '',
-    'סטטוס': s.grade === null || s.grade === undefined ? 'ללא ציון' : s.grade >= 55 ? 'עובר' : 'לא עובר',
-    'עודכן': s.grade_updated_at ? formatDate(s.grade_updated_at) : ''
-  }));
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows, { header: ['שם מלא','מפתח כניסה','ציון','סטטוס','עודכן'] });
-  ws['!cols'] = [{wch:22},{wch:16},{wch:8},{wch:10},{wch:18}];
+  const wsData = [];
+  // Row 1-2: empty (like original)
+  wsData.push([]);
+  wsData.push([]);
+  // Row 3: headers
+  wsData.push(["מס'", "ת.ז התלמיד", "שם התלמיד", "שכבה", "כיתה", "ציון מספרי", "ציון מילולי", "הערה חופשית"]);
+  // Row 4: empty
+  wsData.push([]);
+  // Data rows sorted by name
+  const sorted = [...window._allStudents].sort((a,b)=>a.name.localeCompare(b.name,'he'));
+  sorted.forEach((s, i) => {
+    wsData.push([i+1, '', s.name, '', '', s.grade ?? '', '', '']);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  // Column widths matching original
+  ws['!cols'] = [{wch:5},{wch:12},{wch:21},{wch:6},{wch:6},{wch:12},{wch:21},{wch:13}];
+  // RTL
+  if (!ws['!opts']) ws['!opts'] = {};
   XLSX.utils.book_append_sheet(wb, ws, 'ציונים');
   XLSX.writeFile(wb, 'ציונים.xlsx');
 }
