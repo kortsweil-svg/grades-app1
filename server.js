@@ -187,6 +187,14 @@ app.patch('/api/students/:id/grade', auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: 'שגיאה' }); }
 });
 
+app.patch('/api/students/:id/class', auth, async (req, res) => {
+  try {
+    const { class_name, grade_level } = req.body;
+    await pool.query('UPDATE students SET class_name=$1, grade_level=$2 WHERE id=$3', [class_name||null, grade_level||null, req.params.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'שגיאה' }); }
+});
+
 app.delete('/api/students/:id', auth, async (req, res) => {
   try {
     const { rowCount } = await pool.query('DELETE FROM students WHERE id = $1', [req.params.id]);
