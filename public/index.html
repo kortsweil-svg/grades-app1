@@ -476,17 +476,17 @@ function handleFile(file) {
       const c4=String(r[4]||'').trim();
 
       // Case 1: c0 ends with digits (name + ID in same cell): "אבקסיס רפאל 925925925"
-      const embeddedId = c0.match(/^(.*?)\s+(\d{5,9})\s*$/);
+      const embeddedId = c0.match(/^(.*?)\s+(\d{3,9})\s*$/);
       if(embeddedId) {
         name=embeddedId[1].trim(); rawId=embeddedId[2]; gv=c1;
       }
-      // Case 2: c1 is pure ID (digits)
-      else if(/^\d{5,9}$/.test(c1.replace(/\D/g,''))) {
+      // Case 2: c1 is pure digits (ID - 3 or more digits)
+      else if(/^\d{3,9}$/.test(c1.replace(/\D/g,''))) {
         name=c0; rawId=c1;
-        // [שם, ת"ז, שכבה, כיתה, ציון]
-        if(c4!=='' && isNaN(c2) && isNaN(c3)) { gradeLvl=c2; className=c3; gv=c4; }
-        // [שם, ת"ז, כיתה, ציון]
-        else if(c3!=='' && isNaN(c2) && c2!=='') { className=c2; gv=c3; }
+        // [שם, ת"ז, שכבה, כיתה, ציון] — c4 יש תוכן
+        if(c4!=='') { gradeLvl=c2; className=c3; gv=c4; }
+        // [שם, ת"ז, כיתה, ציון] — c3 יש תוכן
+        else if(c3!=='') { className=c2; gv=c3; }
         // [שם, ת"ז, ציון]
         else { gv=c2; }
       }
