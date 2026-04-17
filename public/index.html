@@ -659,32 +659,29 @@ function renderStudents(students) {
     return;
   }
 
-  function makeCard(s) {
-    const has = s.grade!==null&&s.grade!==undefined;
-    const pass = has && s.grade>=55;
-    const cls = has?(pass?'sc-pass':'sc-fail'):'sc-none';
-    const gradeNum = has?`<div class="grade-big ${pass?'gb-pass':'gb-fail'}">${s.grade}</div>`:`<div class="grade-big gb-none">—</div>`;
-    const badge = has
-      ? `<span class="grade-status-badge ${pass?'gsb-pass':'gsb-fail'}">${pass?'עובר ✓':'לא עובר'}</span>`
-      : `<span class="grade-status-badge gsb-none">ללא ציון</span>`;
-    const av = avatarColor(s.name);
-    const init = initials(s.name);
-    return `<div class="student-row ${cls}" id="sc-${s.id}">
-      <div class="sr-avatar" style="background:linear-gradient(135deg,${av},${av}cc)">${esc(init)}</div>
-      <div class="sr-name">
-        <div class="sr-name-text">${esc(s.name)}${s.grade_level?` <span class="class-badge">${esc(s.grade_level)}</span>`:''}${s.class_name?` <span class="class-badge">${esc(s.class_name)}</span>`:''}</div>
-        <div class="sr-key">${esc(s.lookup_key)}${s.grade_updated_at ? ` · עודכן ${formatDate(s.grade_updated_at)}` : ''}</div>
-      </div>
-      <div class="sr-grade">${gradeNum}</div>
-      <div class="sr-edit">
-        <input class="grade-input" type="number" id="gi-${s.id}" min="0" max="100" value="${s.grade??''}" placeholder="ציון">
-        <button class="save-btn" onclick="saveGrade(${s.id})">שמור</button>
-      </div>
-      <button class="del-btn" onclick="del(${s.id},this)" title="מחק">🗑️</button>
-    </div>`;
-  }
-
   applyFilter();
+}
+
+function makeCard(s) {
+  const has = s.grade!==null&&s.grade!==undefined;
+  const pass = has && s.grade>=55;
+  const cls = has?(pass?'sc-pass':'sc-fail'):'sc-none';
+  const gradeNum = has?`<div class="grade-big ${pass?'gb-pass':'gb-fail'}">${s.grade}</div>`:`<div class="grade-big gb-none">—</div>`;
+  const av = avatarColor(s.name);
+  const init = initials(s.name);
+  return `<div class="student-row ${cls}" id="sc-${s.id}">
+    <div class="sr-avatar" style="background:linear-gradient(135deg,${av},${av}cc)">${esc(init)}</div>
+    <div class="sr-name">
+      <div class="sr-name-text">${esc(s.name)}${s.grade_level?` <span class="class-badge">${esc(s.grade_level)}</span>`:''}${s.class_name?` <span class="class-badge">${esc(s.class_name)}</span>`:''}</div>
+      <div class="sr-key">${esc(s.lookup_key)}${s.grade_updated_at ? ` · עודכן ${formatDate(s.grade_updated_at)}` : ''}</div>
+    </div>
+    <div class="sr-grade">${gradeNum}</div>
+    <div class="sr-edit">
+      <input class="grade-input" type="number" id="gi-${s.id}" min="0" max="100" value="${s.grade??''}" placeholder="ציון">
+      <button class="save-btn" onclick="saveGrade(${s.id})">שמור</button>
+    </div>
+    <button class="del-btn" onclick="del(${s.id},this)" title="מחק">🗑️</button>
+  </div>`;
 }
 
 async function addStudent() {
