@@ -812,7 +812,9 @@ function handleIdFile(input) {
 }
 
 function doExport() {
+  const savedIdMap = window._idMap; // שמור לפני הסגירה
   closeExportModal();
+  window._idMap = savedIdMap; // שחזר אחרי הסגירה
   const exportList = _exportClass
     ? window._allStudents.filter(s=>s.class_name===_exportClass)
     : window._allStudents;
