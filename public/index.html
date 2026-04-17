@@ -785,17 +785,14 @@ function handleIdFile(input) {
     const idMap = {};
     for (const row of rows) {
       const vals = Object.values(row);
-      const keys = Object.keys(row);
-      // Find ID column (long number) and name column (Hebrew text)
       let idVal = '', nameVal = '';
-      for (let i = 0; i < vals.length; i++) {
-        const v = String(vals[i]).replace(/\D/g,'');
-        if (v.length >= 7) { idVal = v; }
-      }
-      // Name column - Hebrew text
-      for (let i = 0; i < vals.length; i++) {
-        const v = String(vals[i]).trim();
-        if (/[\u0590-\u05FF]/.test(v) && v.split(' ').length >= 2) { nameVal = v; break; }
+      for (const v of vals) {
+        const str = String(v||''). trim();
+        const digits = str.replace(/\D/g,'');
+        // ID: pure digits, 7-9 chars
+        if (!idVal && digits.length >= 7 && digits.length <= 9 && str === digits) idVal = digits;
+        // Name: Hebrew text with space
+        if (!nameVal && /[\u0590-\u05FF]/.test(str) && str.includes(' ')) nameVal = str;
       }
       if (nameVal && idVal) idMap[nameVal.trim().toLowerCase().replace(/\s+/g,' ')] = idVal;
     }
