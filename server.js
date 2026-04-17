@@ -23,6 +23,8 @@ async function initDB() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
     ALTER TABLE students ADD COLUMN IF NOT EXISTS grade_updated_at TIMESTAMPTZ DEFAULT NULL;
+    ALTER TABLE students ADD COLUMN IF NOT EXISTS class_name TEXT DEFAULT NULL;
+    ALTER TABLE students ADD COLUMN IF NOT EXISTS grade_level TEXT DEFAULT NULL;
     CREATE TABLE IF NOT EXISTS teacher_credentials (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       id_number TEXT NOT NULL,
@@ -145,14 +147,14 @@ function buildKey(fullName, last3) {
 
 app.get('/api/students', auth, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, name, lookup_key, last3, grade, grade_updated_at FROM students ORDER BY created_at DESC');
+    const { rows } = await pool.query('SELECT id, name, lookup_key, last3, grade, class_name, grade_level, grade_updated_at FROM students ORDER BY created_at DESC');
     res.json(rows);
   } catch(e) { res.status(500).json({ error: 'שגיאה' }); }
 });
 
 app.post('/api/students', auth, async (req, res) => {
   try {
-    const { name, last3, grade } = req.body;
+    const { name, last3, grade, class_name, grade_level } = req.body;
     if (!name) return res.status(400).json({ error: 'חסר שם' });
     if (!last3 || !/^\d{3}$/.test(last3)) return res.status(400).json({ error: 'נא להזין 3 ספרות אחרונות של תז' });
     const key = buildKey(name, last3);
@@ -162,7 +164,7 @@ app.post('/api/students', auth, async (req, res) => {
       gradeVal = parseInt(grade);
       if (isNaN(gradeVal) || gradeVal < 0 || gradeVal > 100) return res.status(400).json({ error: 'ציון חייב להיות בין 0 ל-100' });
     }
-    await pool.query('INSERT INTO students (name, lookup_key, last3, grade) VALUES ($1, $2, $3, $4)', [name.trim(), key, last3, gradeVal]);
+    await pool.query('INSERT INTO students (name, lookup_key, last3, grade, class_name, grade_level) VALUES ($1, $2, $3, $4, $5, $6)', [name.trim(), key, last3, gradeVal, class_name||null, grade_level||null]);
     res.json({ ok: true, lookup_key: key });
   } catch(e) {
     if (e.code === '23505') return res.status(409).json({ error: 'תלמיד עם שם זה כבר קיים' });
