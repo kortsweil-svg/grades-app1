@@ -243,6 +243,8 @@ header{
 .group-pass{color:var(--green);border-color:var(--green-border)}
 .group-fail{color:var(--red);border-color:var(--red-border)}
 .group-none{color:var(--gray-500);border-color:var(--gray-200)}
+.class-badge{background:var(--blue-pale);color:var(--blue);border:1px solid var(--blue-border);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;vertical-align:middle;margin-right:5px}
+.class-select{padding:6px 10px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;font-family:'Heebo',sans-serif;background:var(--white);color:var(--gray-700);cursor:pointer}
 
 .students-list{display:flex;flex-direction:column;gap:0}
 .student-row{
@@ -359,7 +361,7 @@ header{
       <h3>גרור קובץ אקסל לכאן</h3>
       <p>או לחץ לבחירת קובץ מהמחשב</p>
       <button class="btn btn-green" onclick="event.stopPropagation();document.getElementById('file-input').click()">📁 בחר קובץ xlsx</button>
-      <div class="import-note">פורמט 1: <strong>שם מלא | ת"ז | ציון</strong><br>פורמט 2: <strong>שם פרטי | שם משפחה | ת"ז | ציון</strong><br><span style='color:var(--green);font-size:11px'>🔒 התז מתקצרת אוטומטית ל-3 ספרות אחרונות</span></div>
+      <div class="import-note">פורמט 1: <strong>שם מלא | ת"ז | שכבה | כיתה | ציון</strong><br>פורמט 2: <strong>שם מלא | ת"ז | כיתה | ציון</strong><br>פורמט 3: <strong>שם מלא | ת"ז | ציון</strong><br><span style='color:var(--green);font-size:11px'>🔒 התז מתקצרת אוטומטית ל-3 ספרות אחרונות</span></div>
     </div>
     <input type="file" id="file-input" class="file-input" accept=".xlsx,.xls,.csv">
     <div id="import-preview" style="display:none">
@@ -404,7 +406,10 @@ header{
   <div class="card">
     <div class="section-header">
       <div class="section-title">🎓 <span>תלמידים (<span id="count">0</span>)</span></div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="class-filter" class="class-select" onchange="applyFilter()" style="display:none">
+          <option value="">כל הכיתות</option>
+        </select>
         <button class="btn btn-ghost" id="export-btn" onclick="exportExcel()" style="display:none;font-size:12px;padding:7px 14px">📥 ייצא לאקסל</button>
         <button class="btn btn-danger" id="clear-btn" onclick="clearAll()" style="display:none;font-size:12px;padding:7px 14px">🗑️ מחק הכל</button>
       </div>
@@ -463,11 +468,12 @@ function handleFile(file) {
     let rows = raw;
     if (raw.length && isNaN(String(raw[0][0]).trim()) && String(raw[0][0]).trim()) rows = raw.slice(1);
     parsedRows = rows.filter(r => r.some(c => String(c).trim())).map((r, i) => {
-      let name, rawId, gv;
+      let name, rawId, gv, className='', gradeLvl='';
       const c0=String(r[0]||'').trim();
       const c1=String(r[1]||'').trim();
       const c2=String(r[2]||'').trim();
       const c3=String(r[3]||'').trim();
+      const c4=String(r[4]||'').trim();
 
       // Case 1: c0 ends with digits (name + ID in same cell): "אבקסיס רפאל 925925925"
       const embeddedId = c0.match(/^(.*?)\s+(\d{5,9})\s*$/);
@@ -476,7 +482,13 @@ function handleFile(file) {
       }
       // Case 2: c1 is pure ID (digits)
       else if(/^\d{5,9}$/.test(c1.replace(/\D/g,''))) {
-        name=c0; rawId=c1; gv=c2;
+        name=c0; rawId=c1;
+        // [שם, ת"ז, שכבה, כיתה, ציון]
+        if(c4!=='' && isNaN(c2) && isNaN(c3)) { gradeLvl=c2; className=c3; gv=c4; }
+        // [שם, ת"ז, כיתה, ציון]
+        else if(c3!=='' && isNaN(c2) && c2!=='') { className=c2; gv=c3; }
+        // [שם, ת"ז, ציון]
+        else { gv=c2; }
       }
       // Case 3: 4 columns [שם פרטי, שם משפחה, תז, ציון]
       else if(c3!=='' && /^\d{5,9}$/.test(c2.replace(/\D/g,''))) {
@@ -496,7 +508,7 @@ function handleFile(file) {
       if(!/^\d{3}$/.test(l3)) errors.push('3 ספרות שגויות');
       if(gv&&(isNaN(g)||g<0||g>100)) errors.push('ציון לא תקין');
       const key=nameParts.length>=1?`${nameParts[0]}${l3}`.toLowerCase():'';
-      return {name:name.trim(),last3:l3,grade:g,key,errors,row:i+2};
+      return {name:name.trim(),last3:l3,grade:g,class_name:className,grade_level:gradeLvl,key,errors,row:i+2};
     });
     showPreview();
   };
@@ -534,7 +546,7 @@ async function confirmImport() {
     const s=parsedRows[i];
     if(s.errors.length) continue;
     try {
-      const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name:s.name,last3:s.last3,grade:s.grade})});
+      const res=await fetch('/api/students',{method:'POST',headers:hdrs(),body:JSON.stringify({name:s.name,last3:s.last3,grade:s.grade,class_name:s.class_name||'',grade_level:s.grade_level||''})});
       const data=await res.json();
       if(!res.ok){
         failed.push({name:s.name, reason:data.error||'שגיאה'});
@@ -579,8 +591,41 @@ function showMsg(text,ok) {
 }
 
 document.getElementById('t-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('t-last3').focus();});
-document.getElementById('t-last3').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('t-grade').focus();});
+document.getElementById('t-last3').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('t-level').focus();});
+document.getElementById('t-level').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('t-class').focus();});
+document.getElementById('t-class').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('t-grade').focus();});
 document.getElementById('t-grade').addEventListener('keydown',e=>{if(e.key==='Enter')addStudent();});
+
+function applyFilter() {
+  if (!window._allStudents) return;
+  const cls = document.getElementById('class-filter').value;
+  const filtered = cls ? window._allStudents.filter(s => s.class_name === cls) : window._allStudents;
+  window._filteredStudents = filtered;
+  renderStudentsFiltered(filtered);
+}
+
+function renderStudentsFiltered(students) {
+  document.getElementById('count').textContent = students.length;
+  document.getElementById('clear-btn').style.display = window._allStudents&&window._allStudents.length ? 'inline-block' : 'none';
+  document.getElementById('export-btn').style.display = students.length ? 'inline-block' : 'none';
+
+  if(!students.length) {
+    document.getElementById('students-wrap').innerHTML='<div class="empty-state"><span class="empty-icon">🎓</span><div class="empty-text">אין תלמידים בכיתה זו</div></div>';
+    return;
+  }
+
+  const sortByName = arr => arr.sort((a,b) => a.name.localeCompare(b.name, 'he'));
+  const passing = sortByName(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade>=55));
+  const failing  = sortByName(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade<55));
+  const noGrade  = sortByName(students.filter(s => s.grade===null || s.grade===undefined));
+
+  let html = '';
+  if (passing.length) { html += `<div class="group-header group-pass">✅ עוברים (${passing.length})</div><div class="students-list">${passing.map(makeCard).join('')}</div>`; }
+  if (failing.length)  { html += `<div class="group-header group-fail">❌ לא עוברים (${failing.length})</div><div class="students-list">${failing.map(makeCard).join('')}</div>`; }
+  if (noGrade.length)  { html += `<div class="group-header group-none">📋 ללא ציון (${noGrade.length})</div><div class="students-list">${noGrade.map(makeCard).join('')}</div>`; }
+
+  document.getElementById('students-wrap').innerHTML = html;
+}
 
 async function loadStudents() {
   try {
@@ -594,6 +639,13 @@ async function loadStudents() {
 
 function renderStudents(students) {
   window._allStudents = students;
+  // Build class filter
+  const classes = [...new Set(students.map(s=>s.class_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'he'));
+  const levels = [...new Set(students.map(s=>s.grade_level).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'he'));
+  const sel = document.getElementById('class-filter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">כל הכיתות</option>' + classes.map(c=>`<option value="${esc(c)}" ${c===cur?'selected':''}>${esc(c)}</option>`).join('');
+  sel.style.display = classes.length ? 'inline-block' : 'none';
   document.getElementById('count').textContent=students.length;
   document.getElementById('stat-total').textContent=students.length;
   const gr=students.filter(s=>s.grade!==null&&s.grade!==undefined);
@@ -620,7 +672,7 @@ function renderStudents(students) {
     return `<div class="student-row ${cls}" id="sc-${s.id}">
       <div class="sr-avatar" style="background:linear-gradient(135deg,${av},${av}cc)">${esc(init)}</div>
       <div class="sr-name">
-        <div class="sr-name-text">${esc(s.name)}</div>
+        <div class="sr-name-text">${esc(s.name)}${s.grade_level?` <span class="class-badge">${esc(s.grade_level)}</span>`:''}${s.class_name?` <span class="class-badge">${esc(s.class_name)}</span>`:''}</div>
         <div class="sr-key">${esc(s.lookup_key)}${s.grade_updated_at ? ` · עודכן ${formatDate(s.grade_updated_at)}` : ''}</div>
       </div>
       <div class="sr-grade">${gradeNum}</div>
@@ -632,27 +684,7 @@ function renderStudents(students) {
     </div>`;
   }
 
-  const sortByName = arr => arr.sort((a,b) => a.name.localeCompare(b.name, 'he'));
-  const passing = sortByName(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade>=55));
-  const failing = sortByName(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade<55));
-  const noGrade = sortByName(students.filter(s => s.grade===null || s.grade===undefined));
-
-  let html = '';
-
-  if (passing.length) {
-    html += `<div class="group-header group-pass">✅ עוברים (${passing.length})</div>`;
-    html += `<div class="students-list">${passing.map(makeCard).join('')}</div>`;
-  }
-  if (failing.length) {
-    html += `<div class="group-header group-fail">❌ לא עוברים (${failing.length})</div>`;
-    html += `<div class="students-list">${failing.map(makeCard).join('')}</div>`;
-  }
-  if (noGrade.length) {
-    html += `<div class="group-header group-none">📋 ללא ציון (${noGrade.length})</div>`;
-    html += `<div class="students-list">${noGrade.map(makeCard).join('')}</div>`;
-  }
-
-  document.getElementById('students-wrap').innerHTML = html;
+  applyFilter();
 }
 
 async function addStudent() {
@@ -673,6 +705,8 @@ async function addStudent() {
     // grade already saved via POST
     document.getElementById('t-name').value='';
     document.getElementById('t-last3').value='';
+    document.getElementById('t-level').value='';
+    document.getElementById('t-class').value='';
     document.getElementById('t-grade').value='';
     document.getElementById('t-name').focus();
     showMsg(`✅ נוסף! מפתח: <strong>${data.lookup_key}</strong>`,true);
@@ -699,7 +733,8 @@ async function del(id,el){
 }
 
 function exportExcel() {
-  if (!window._allStudents || !window._allStudents.length) return;
+  const exportList = window._filteredStudents || window._allStudents;
+  if (!exportList || !exportList.length) return;
   const wb = XLSX.utils.book_new();
   const wsData = [];
   // Row 1-2: empty (like original)
@@ -710,9 +745,9 @@ function exportExcel() {
   // Row 4: empty
   wsData.push([]);
   // Data rows sorted by name
-  const sorted = [...window._allStudents].sort((a,b)=>a.name.localeCompare(b.name,'he'));
+  const sorted = [...exportList].sort((a,b)=>a.name.localeCompare(b.name,'he'));
   sorted.forEach((s, i) => {
-    wsData.push([i+1, '', s.name, '', '', s.grade ?? '', '', '']);
+    wsData.push([i+1, '', s.name, s.grade_level||'', s.class_name||'', s.grade ?? '', '', '']);
   });
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   // Column widths matching original
