@@ -830,7 +830,9 @@ function doExport() {
   const sorted = [...exportList].sort((a,b)=>a.name.localeCompare(b.name,'he'));
   sorted.forEach((s, i) => {
     const normName = s.name.trim().toLowerCase().replace(/\s+/g,' ');
-    const fullId = (window._idMap && window._idMap[normName]) || '';
+    const parts = normName.split(' ');
+    const reversedName = parts.length >= 2 ? parts[parts.length-1] + ' ' + parts.slice(0,-1).join(' ') : normName;
+    const fullId = (window._idMap && (window._idMap[normName] || window._idMap[reversedName])) || '';
     wsData.push([i+1, fullId, s.name, s.grade_level||'', s.class_name||'', s.grade ?? '', '', '']);
   });
   const ws = XLSX.utils.aoa_to_sheet(wsData);
