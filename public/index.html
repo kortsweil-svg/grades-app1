@@ -380,15 +380,23 @@ header{
     <div class="section-header">
       <div class="section-title">➕ <span>הוספה ידנית</span></div>
     </div>
-    <div class="add-form">
+    <div class="add-form" style="grid-template-columns:1fr 100px 80px 80px 100px auto">
       <div class="field">
         <label>שם מלא</label>
         <input type="text" id="t-name" placeholder="ישראל ישראלי" autocomplete="off">
-        <div class="hint">מפתח כניסה: שם משפחה + 3 ספרות ת"ז — למשל <strong>ישראלי503</strong></div>
+        <div class="hint">מפתח: שם משפחה + 3 ספרות ת"ז — למשל <strong>ישראלי503</strong></div>
       </div>
       <div class="field">
         <label>3 ספרות ת"ז</label>
         <input type="text" id="t-last3" placeholder="456" maxlength="3" inputmode="numeric" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>שכבה</label>
+        <input type="text" id="t-level" placeholder="י" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>כיתה</label>
+        <input type="text" id="t-class" placeholder="י1" autocomplete="off">
       </div>
       <div class="field">
         <label>ציון</label>
