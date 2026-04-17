@@ -794,7 +794,16 @@ function handleIdFile(input) {
         // Name: Hebrew text with space
         if (!nameVal && /[\u0590-\u05FF]/.test(str) && str.includes(' ')) nameVal = str;
       }
-      if (nameVal && idVal) idMap[nameVal.trim().toLowerCase().replace(/\s+/g,' ')] = idVal;
+      if (nameVal && idVal) {
+        const norm = nameVal.trim().toLowerCase().replace(/\s+/g,' ');
+        idMap[norm] = idVal;
+        // גם הפוך — שם פרטי משפחה ↔ שם משפחה פרטי
+        const parts = norm.split(' ');
+        if (parts.length >= 2) {
+          const reversed = parts[parts.length-1] + ' ' + parts.slice(0,-1).join(' ');
+          idMap[reversed] = idVal;
+        }
+      }
     }
     window._idMap = idMap;
     console.log('ID map built:', Object.keys(idMap).length, 'entries');
