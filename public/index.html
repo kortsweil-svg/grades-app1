@@ -243,6 +243,13 @@ header{
 .group-pass{color:var(--green);border-color:var(--green-border)}
 .group-fail{color:var(--red);border-color:var(--red-border)}
 .group-none{color:var(--gray-500);border-color:var(--gray-200)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--white);border-radius:var(--radius-lg);padding:2rem;width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:slideUp .2s ease}
+.modal h3{font-size:17px;font-weight:700;color:var(--gray-900);margin-bottom:1.25rem}
+.modal-option{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--gray-200);margin-bottom:8px;cursor:pointer;transition:all .15s;font-size:14px;color:var(--gray-800);background:var(--white)}
+.modal-option:hover{border-color:var(--blue);background:var(--blue-pale);color:var(--blue)}
+.modal-option.selected{border-color:var(--blue);background:var(--blue-pale);color:var(--blue);font-weight:600}
+.modal-footer{display:flex;gap:10px;margin-top:1.25rem}
 .class-badge{background:var(--blue-pale);color:var(--blue);border:1px solid var(--blue-border);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;vertical-align:middle;margin-right:5px}
 .class-select{padding:6px 10px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);font-size:13px;font-family:'Heebo',sans-serif;background:var(--white);color:var(--gray-700);cursor:pointer}
 
@@ -737,8 +744,37 @@ async function del(id,el){
   loadStudents();
 }
 
+let _exportClass = null;
+
 function exportExcel() {
-  const exportList = window._filteredStudents || window._allStudents;
+  if (!window._allStudents || !window._allStudents.length) return;
+  const classes = [...new Set(window._allStudents.map(s=>s.class_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'he'));
+  _exportClass = null;
+  const opts = document.getElementById('modal-options');
+  let html = `<div class="modal-option selected" onclick="selectExportClass(null, this)">📋 כל התלמידים (${window._allStudents.length})</div>`;
+  classes.forEach(cls => {
+    const count = window._allStudents.filter(s=>s.class_name===cls).length;
+    html += `<div class="modal-option" onclick="selectExportClass('${cls}', this)">🏫 כיתה ${cls} (${count})</div>`;
+  });
+  opts.innerHTML = html;
+  document.getElementById('export-modal').style.display = 'block';
+}
+
+function selectExportClass(cls, el) {
+  _exportClass = cls;
+  document.querySelectorAll('.modal-option').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function closeExportModal() {
+  document.getElementById('export-modal').style.display = 'none';
+}
+
+function doExport() {
+  closeExportModal();
+  const exportList = _exportClass
+    ? window._allStudents.filter(s=>s.class_name===_exportClass)
+    : window._allStudents;
   if (!exportList || !exportList.length) return;
   const wb = XLSX.utils.book_new();
   const wsData = [];
@@ -760,7 +796,7 @@ function exportExcel() {
   // RTL
   if (!ws['!opts']) ws['!opts'] = {};
   XLSX.utils.book_append_sheet(wb, ws, 'ציונים');
-  XLSX.writeFile(wb, 'ציונים.xlsx');
+  XLSX.writeFile(wb, _exportClass ? `ציונים_כיתה_${_exportClass}.xlsx` : 'ציונים.xlsx');
 }
 
 async function clearAll(){
@@ -779,5 +815,17 @@ if('serviceWorker' in navigator) {
   });
 }
 </script>
+<div id="export-modal" style="display:none">
+  <div class="modal-overlay" onclick="closeExportModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>📥 בחר כיתה לייצוא</h3>
+      <div id="modal-options"></div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" onclick="doExport()" style="flex:1">ייצא ←</button>
+        <button class="btn btn-ghost" onclick="closeExportModal()" style="flex:1">ביטול</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
