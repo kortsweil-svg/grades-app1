@@ -695,6 +695,12 @@ function makeCard(s) {
       <input class="grade-input" type="number" id="gi-${s.id}" min="0" max="100" value="${s.grade??''}" placeholder="ציון">
       <button class="save-btn" onclick="saveGrade(${s.id})">שמור</button>
     </div>
+    <div class="sr-edit" id="ce-${s.id}" style="display:none">
+      <input class="grade-input" type="text" id="li-${s.id}" value="${esc(s.grade_level||'')} " placeholder="שכבה" style="width:50px">
+      <input class="grade-input" type="text" id="ci-${s.id}" value="${esc(s.class_name||'')} " placeholder="כיתה" style="width:50px">
+      <button class="save-btn" onclick="saveClass(${s.id})">✓</button>
+    </div>
+    <button class="del-btn" onclick="toggleClassEdit(${s.id})" title="ערוך כיתה">✏️</button>
     <button class="del-btn" onclick="del(${s.id},this)" title="מחק">🗑️</button>
   </div>`;
 }
@@ -725,6 +731,22 @@ async function addStudent() {
     loadStudents();
   } catch(e){showMsg('שגיאת רשת');}
   finally{btn.disabled=false;btn.textContent='הוסף ←';}
+}
+
+function toggleClassEdit(id) {
+  const el = document.getElementById('ce-'+id);
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+}
+
+async function saveClass(id) {
+  const level = document.getElementById('li-'+id).value.trim();
+  const cls   = document.getElementById('ci-'+id).value.trim();
+  await fetch('/api/students/'+id+'/class', {
+    method:'PATCH', headers:hdrs(),
+    body:JSON.stringify({class_name:cls, grade_level:level})
+  });
+  document.getElementById('ce-'+id).style.display = 'none';
+  loadStudents();
 }
 
 async function saveGrade(id) {
