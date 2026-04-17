@@ -768,6 +768,41 @@ function selectExportClass(cls, el) {
 
 function closeExportModal() {
   document.getElementById('export-modal').style.display = 'none';
+  document.getElementById('id-file-name').textContent = 'לחץ לבחירת קובץ xlsx';
+  document.getElementById('id-file-input').value = '';
+  window._idMap = null;
+}
+
+function handleIdFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('id-file-name').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type:'array'});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval:''});
+    // Build map: normalized name → full ID
+    const idMap = {};
+    for (const row of rows) {
+      const vals = Object.values(row);
+      const keys = Object.keys(row);
+      // Find ID column (long number) and name column (Hebrew text)
+      let idVal = '', nameVal = '';
+      for (let i = 0; i < vals.length; i++) {
+        const v = String(vals[i]).replace(/\D/g,'');
+        if (v.length >= 7) { idVal = v; }
+      }
+      // Name column - Hebrew text
+      for (let i = 0; i < vals.length; i++) {
+        const v = String(vals[i]).trim();
+        if (/[\u0590-\u05FF]/.test(v) && v.split(' ').length >= 2) { nameVal = v; break; }
+      }
+      if (nameVal && idVal) idMap[nameVal.trim().toLowerCase().replace(/\s+/g,' ')] = idVal;
+    }
+    window._idMap = idMap;
+    console.log('ID map built:', Object.keys(idMap).length, 'entries');
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 function doExport() {
@@ -788,13 +823,15 @@ function doExport() {
   // Data rows sorted by name
   const sorted = [...exportList].sort((a,b)=>a.name.localeCompare(b.name,'he'));
   sorted.forEach((s, i) => {
-    wsData.push([i+1, '', s.name, s.grade_level||'', s.class_name||'', s.grade ?? '', '', '']);
+    const normName = s.name.trim().toLowerCase().replace(/\s+/g,' ');
+    const fullId = (window._idMap && window._idMap[normName]) || '';
+    wsData.push([i+1, fullId, s.name, s.grade_level||'', s.class_name||'', s.grade ?? '', '', '']);
   });
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   // Column widths matching original
   ws['!cols'] = [{wch:5},{wch:12},{wch:21},{wch:6},{wch:6},{wch:12},{wch:21},{wch:13}];
   // RTL
-  if (!ws['!opts']) ws['!opts'] = {};
+  ws['!opts'] = {rightToLeft: true};
   XLSX.utils.book_append_sheet(wb, ws, 'ציונים');
   XLSX.writeFile(wb, _exportClass ? `ציונים_כיתה_${_exportClass}.xlsx` : 'ציונים.xlsx');
 }
@@ -817,9 +854,24 @@ if('serviceWorker' in navigator) {
 </script>
 <div id="export-modal" style="display:none">
   <div class="modal-overlay" onclick="closeExportModal()">
-    <div class="modal" onclick="event.stopPropagation()">
-      <h3>📥 בחר כיתה לייצוא</h3>
-      <div id="modal-options"></div>
+    <div class="modal" onclick="event.stopPropagation()" style="width:400px">
+      <h3>📥 ייצוא לאקסל</h3>
+
+      <div style="margin-bottom:1rem">
+        <div style="font-size:13px;font-weight:600;color:var(--gray-600);margin-bottom:8px">1. בחר כיתה</div>
+        <div id="modal-options"></div>
+      </div>
+
+      <div style="margin-bottom:1rem">
+        <div style="font-size:13px;font-weight:600;color:var(--gray-600);margin-bottom:6px">2. העלה קובץ תלמידים עם ת"ז מלאה <span style="font-weight:400;color:var(--gray-400)">(אופציונלי)</span></div>
+        <div style="font-size:11px;color:var(--gray-400);margin-bottom:8px">אם תעלה קובץ, הת"ז תתווסף לדוח אוטומטית לפי שם</div>
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px dashed var(--gray-200);border-radius:var(--radius-sm);cursor:pointer;background:var(--gray-50);transition:all .15s" id="id-file-label">
+          <span style="font-size:20px">📎</span>
+          <span style="font-size:13px;color:var(--gray-500)" id="id-file-name">לחץ לבחירת קובץ xlsx</span>
+          <input type="file" id="id-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleIdFile(this)">
+        </label>
+      </div>
+
       <div class="modal-footer">
         <button class="btn btn-primary" onclick="doExport()" style="flex:1">ייצא ←</button>
         <button class="btn btn-ghost" onclick="closeExportModal()" style="flex:1">ביטול</button>
