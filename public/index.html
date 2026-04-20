@@ -243,6 +243,8 @@ header{
 .group-pass{color:var(--green);border-color:var(--green-border)}
 .group-fail{color:var(--red);border-color:var(--red-border)}
 .group-none{color:var(--gray-500);border-color:var(--gray-200)}
+.avg-row{text-align:left;padding:8px 14px;font-size:13px;color:var(--gray-500);background:var(--gray-50);border-top:1px solid var(--gray-100);display:flex;gap:16px}
+.avg-row strong{color:var(--gray-800)}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;display:flex;align-items:center;justify-content:center}
 .modal{background:var(--white);border-radius:var(--radius-lg);padding:2rem;width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:slideUp .2s ease}
 .modal h3{font-size:17px;font-weight:700;color:var(--gray-900);margin-bottom:1.25rem}
@@ -645,7 +647,9 @@ function renderStudentsFiltered(students) {
   // כשממיינים לפי ציון — הצג רשימה אחת ללא חלוקה לקבוצות
   if (sortMode !== 'name') {
     const all = sortArr([...students]);
-    document.getElementById('students-wrap').innerHTML = `<div class="students-list">${all.map(makeCard).join('')}</div>`;
+    document.getElementById('students-wrap').innerHTML =
+      `<div class="students-list">${all.map(makeCard).join('')}</div>` +
+      avgBar(all, 'סה"כ');
     return;
   }
 
@@ -654,9 +658,10 @@ function renderStudentsFiltered(students) {
   const noGrade  = sortArr(students.filter(s => s.grade===null || s.grade===undefined));
 
   let html = '';
-  if (passing.length) { html += `<div class="group-header group-pass">✅ עוברים (${passing.length})</div><div class="students-list">${passing.map(makeCard).join('')}</div>`; }
-  if (failing.length)  { html += `<div class="group-header group-fail">❌ לא עוברים (${failing.length})</div><div class="students-list">${failing.map(makeCard).join('')}</div>`; }
+  if (passing.length) { html += `<div class="group-header group-pass">✅ עוברים (${passing.length})</div><div class="students-list">${passing.map(makeCard).join('')}</div>${avgBar(passing)}`; }
+  if (failing.length)  { html += `<div class="group-header group-fail">❌ לא עוברים (${failing.length})</div><div class="students-list">${failing.map(makeCard).join('')}</div>${avgBar(failing)}`; }
   if (noGrade.length)  { html += `<div class="group-header group-none">📋 ללא ציון (${noGrade.length})</div><div class="students-list">${noGrade.map(makeCard).join('')}</div>`; }
+  html += avgBar(students, 'ממוצע כללי');
 
   document.getElementById('students-wrap').innerHTML = html;
 }
@@ -750,6 +755,19 @@ async function addStudent() {
     loadStudents();
   } catch(e){showMsg('שגיאת רשת');}
   finally{btn.disabled=false;btn.textContent='הוסף ←';}
+}
+
+function calcAvg(arr) {
+  const graded = arr.filter(s => s.grade !== null && s.grade !== undefined);
+  if (!graded.length) return null;
+  return (graded.reduce((sum,s) => sum + s.grade, 0) / graded.length).toFixed(1);
+}
+
+function avgBar(arr, label='') {
+  const avg = calcAvg(arr);
+  const graded = arr.filter(s => s.grade !== null && s.grade !== undefined);
+  if (!avg) return '';
+  return `<div class="avg-row">${label ? `<span>${label}</span>` : ''}<span>ממוצע: <strong>${avg}</strong></span><span style="color:var(--gray-400)">(${graded.length} תלמידים עם ציון)</span></div>`;
 }
 
 function toggleClassEdit(id) {
