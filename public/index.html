@@ -244,6 +244,15 @@ header{
 .group-fail{color:var(--red);border-color:var(--red-border)}
 .group-none{color:var(--gray-500);border-color:var(--gray-200)}
 .avg-row{text-align:left;padding:8px 14px;font-size:13px;color:var(--gray-500);background:var(--gray-50);border-top:1px solid var(--gray-100);display:flex;gap:16px}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px}
+.compare-table th{text-align:right;padding:9px 14px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);font-weight:600;color:var(--gray-500);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.compare-table td{padding:9px 14px;border-bottom:1px solid var(--gray-100);color:var(--gray-800)}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table tr:hover td{background:var(--gray-50)}
+.bar-wrap{display:flex;align-items:center;gap:8px}
+.bar{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--blue-light));min-width:4px;transition:width .3s}
+.bar.high{background:linear-gradient(90deg,var(--green),var(--green-light))}
+.bar.low{background:linear-gradient(90deg,var(--orange),var(--orange-light))}
 .avg-row strong{color:var(--gray-800)}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;display:flex;align-items:center;justify-content:center}
 .modal{background:var(--white);border-radius:var(--radius-lg);padding:2rem;width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:slideUp .2s ease}
@@ -438,6 +447,18 @@ header{
     </div>
     <div id="students-wrap">
       <div class="empty-state"><span class="empty-icon">📭</span><div class="empty-text">טוען...</div></div>
+    </div>
+  </div>
+
+  <!-- Class comparison -->
+  <div class="card" id="compare-card" style="display:none">
+    <div class="section-header">
+      <div class="section-title">📊 <span>השוואת ממוצעים בין כיתות</span></div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table class="compare-table" id="compare-table"></table>
+      </div>
     </div>
   </div>
 
@@ -755,6 +776,48 @@ async function addStudent() {
     loadStudents();
   } catch(e){showMsg('שגיאת רשת');}
   finally{btn.disabled=false;btn.textContent='הוסף ←';}
+}
+
+function renderCompareTable(students) {
+  const classes = [...new Set(students.map(s=>s.class_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'he'));
+  const card = document.getElementById('compare-card');
+  if (classes.length < 2) { card.style.display='none'; return; }
+  card.style.display = 'block';
+
+  const maxAvg = Math.max(...classes.map(cls => {
+    const graded = students.filter(s=>s.class_name===cls && s.grade!==null && s.grade!==undefined);
+    return graded.length ? graded.reduce((s,x)=>s+x.grade,0)/graded.length : 0;
+  }));
+
+  const rows = classes.map(cls => {
+    const all = students.filter(s=>s.class_name===cls);
+    const graded = all.filter(s=>s.grade!==null && s.grade!==undefined);
+    const avg = graded.length ? (graded.reduce((s,x)=>s+x.grade,0)/graded.length).toFixed(1) : '—';
+    const passing = graded.filter(s=>s.grade>=55).length;
+    const pct = graded.length ? Math.round(passing/graded.length*100) : 0;
+    const barWidth = avg!=='—' ? Math.round((parseFloat(avg)/100)*200) : 0;
+    const barClass = avg!=='—' ? (parseFloat(avg)>=70?'high':parseFloat(avg)<55?'low':'') : '';
+    return `<tr>
+      <td><strong>${esc(cls)}</strong></td>
+      <td>${all.length}</td>
+      <td><div class="bar-wrap"><div class="bar ${barClass}" style="width:${barWidth}px"></div><span>${avg}</span></div></td>
+      <td>${passing}/${graded.length} <span style="color:var(--gray-400)">(${pct}%)</span></td>
+    </tr>`;
+  }).join('');
+
+  // Total row
+  const allGraded = students.filter(s=>s.grade!==null && s.grade!==undefined);
+  const totalAvg = allGraded.length ? (allGraded.reduce((s,x)=>s+x.grade,0)/allGraded.length).toFixed(1) : '—';
+  const totalPass = allGraded.filter(s=>s.grade>=55).length;
+
+  document.getElementById('compare-table').innerHTML = `
+    <thead><tr><th>כיתה</th><th>תלמידים</th><th>ממוצע</th><th>עוברים</th></tr></thead>
+    <tbody>${rows}
+    <tr style="background:var(--gray-50);font-weight:600">
+      <td>סה"כ</td><td>${students.length}</td>
+      <td><strong>${totalAvg}</strong></td>
+      <td>${totalPass}/${allGraded.length} <span style="color:var(--gray-400)">(${allGraded.length?Math.round(totalPass/allGraded.length*100):0}%)</span></td>
+    </tr></tbody>`;
 }
 
 function calcAvg(arr) {
