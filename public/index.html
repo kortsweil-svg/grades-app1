@@ -422,6 +422,11 @@ header{
     <div class="section-header">
       <div class="section-title">🎓 <span>תלמידים (<span id="count">0</span>)</span></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="sort-by" class="class-select" onchange="applyFilter()">
+          <option value="name">מיין: שם א-ת</option>
+          <option value="grade-desc">מיין: ציון ↓</option>
+          <option value="grade-asc">מיין: ציון ↑</option>
+        </select>
         <select id="class-filter" class="class-select" onchange="applyFilter()" style="display:none">
           <option value="">כל הכיתות</option>
         </select>
@@ -629,10 +634,24 @@ function renderStudentsFiltered(students) {
     return;
   }
 
-  const sortByName = arr => arr.sort((a,b) => a.name.localeCompare(b.name, 'he'));
-  const passing = sortByName(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade>=55));
-  const failing  = sortByName(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade<55));
-  const noGrade  = sortByName(students.filter(s => s.grade===null || s.grade===undefined));
+  const sortMode = document.getElementById('sort-by')?.value || 'name';
+
+  function sortArr(arr) {
+    if (sortMode === 'grade-desc') return arr.sort((a,b) => (b.grade??-1) - (a.grade??-1));
+    if (sortMode === 'grade-asc')  return arr.sort((a,b) => (a.grade??101) - (b.grade??101));
+    return arr.sort((a,b) => a.name.localeCompare(b.name, 'he'));
+  }
+
+  // כשממיינים לפי ציון — הצג רשימה אחת ללא חלוקה לקבוצות
+  if (sortMode !== 'name') {
+    const all = sortArr([...students]);
+    document.getElementById('students-wrap').innerHTML = `<div class="students-list">${all.map(makeCard).join('')}</div>`;
+    return;
+  }
+
+  const passing = sortArr(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade>=55));
+  const failing  = sortArr(students.filter(s => s.grade!==null && s.grade!==undefined && s.grade<55));
+  const noGrade  = sortArr(students.filter(s => s.grade===null || s.grade===undefined));
 
   let html = '';
   if (passing.length) { html += `<div class="group-header group-pass">✅ עוברים (${passing.length})</div><div class="students-list">${passing.map(makeCard).join('')}</div>`; }
