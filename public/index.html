@@ -331,57 +331,81 @@ header{
 
 /* ── Mobile (iPhone 13 = 390px) ── */
 @media (max-width: 430px) {
+  /* Header */
   header { padding: 0 1rem; height: 54px; }
+  .logo-sep, .logo-sub, .teacher-pill span { display: none; }
   .logo-text { font-size: 14px; }
-  .logo-sep, .logo-sub { display: none; }
-  .teacher-pill span { display: none; }
   .btn-logout { padding: 6px 10px; font-size: 12px; }
 
-  .page { padding: 1rem 0.75rem; }
+  /* Page */
+  .page { padding: 0.75rem; }
 
-  .stats { grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1.25rem; }
-  .stat-card { padding: 0.875rem 0.5rem; gap: 8px; flex-direction: column; text-align: center; }
-  .stat-icon { width: 36px; height: 36px; font-size: 16px; }
-  .stat-info .val { font-size: 22px; }
+  /* Stats - 3 columns compact */
+  .stats { grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 1rem; }
+  .stat-card { padding: 10px 6px; flex-direction: column; text-align: center; gap: 6px; }
+  .stat-icon { width: 32px; height: 32px; font-size: 15px; border-radius: 10px; }
+  .stat-info .val { font-size: 20px; }
   .stat-info .lbl { font-size: 10px; }
 
+  /* Link box */
   .link-box { flex-direction: column; gap: 8px; padding: 1rem; }
-  .link-input { width: 100%; }
+  .link-input { width: 100%; font-size: 11px; }
+  .btn-copy { font-size: 12px; padding: 7px 12px; }
 
-  .card { padding: 1rem; margin-bottom: 1rem; border-radius: var(--radius); }
+  /* Cards */
+  .card { padding: 0.875rem; margin-bottom: 0.875rem; border-radius: var(--radius); }
 
-  .add-form { grid-template-columns: 1fr 1fr !important; gap: 8px; }
-  .add-form .field:last-child { grid-column: 1 / -1; }
-  .add-form .field:nth-last-child(2) { grid-column: 1 / -1; }
-
-  .section-header { flex-wrap: wrap; gap: 8px; }
-  .section-title { font-size: 14px; }
-
-  .sr-avatar { width: 30px; height: 30px; font-size: 11px; }
-  .sr-name-text { font-size: 13px; }
-  .sr-key { font-size: 10px; }
-  .sr-grade .grade-big { font-size: 18px; }
-  .sr-edit .grade-input { width: 52px; }
-  .save-btn { padding: 6px 8px; font-size: 11px; }
-  .del-btn { font-size: 12px; padding: 2px 4px; }
-
-  .group-header { font-size: 13px; padding: 0.75rem 0 0.5rem; }
-
-  .modal { width: calc(100vw - 2rem) !important; padding: 1.25rem; }
-  .modal-option { padding: 8px 10px; font-size: 13px; }
-
-  .compare-table th, .compare-table td { padding: 7px 8px; font-size: 12px; }
-  .bar-wrap .bar { max-width: 80px; }
-
-  .class-select { font-size: 12px; padding: 5px 8px; }
-
+  /* Import */
   .import-zone { padding: 1rem; }
   .import-zone h3 { font-size: 14px; }
   .import-zone p { font-size: 12px; }
+  .import-note { font-size: 10px; }
 
-  .preview-table th, .preview-table td { padding: 6px 8px; font-size: 11px; }
+  /* Add form - 2 cols */
+  .add-form { grid-template-columns: 1fr 1fr !important; gap: 8px; }
+  .add-form > .field:first-child { grid-column: 1 / -1; }
+  .add-form > .field:last-child { grid-column: 1 / -1; }
 
+  /* Section header */
+  .section-header { flex-wrap: wrap; gap: 6px; margin-bottom: 0.75rem; }
+  .section-title { font-size: 14px; }
+  .class-select, #sort-by { font-size: 12px; padding: 5px 7px; }
+
+  /* Classes grid - single column on mobile */
+  .classes-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .class-col-header { font-size: 13px; padding: 10px 12px; }
+
+  /* Student rows */
+  .student-row { padding: 8px 10px; gap: 8px; }
+  .sr-avatar { width: 28px; height: 28px; font-size: 10px; flex-shrink: 0; }
+  .sr-name-text { font-size: 12px; }
+  .sr-key { font-size: 10px; }
+  .sr-grade { min-width: 36px; }
+  .sr-grade .grade-big { font-size: 16px; }
+  .sr-edit { gap: 4px; }
+  .sr-edit .grade-input { width: 46px; font-size: 12px; padding: 5px 6px; }
+  .save-btn { padding: 5px 8px; font-size: 11px; }
+  .del-btn { font-size: 11px; padding: 2px 3px; }
+  .group-header { font-size: 12px; padding: 8px 0 5px; }
+
+  /* Avg row */
+  .avg-row { font-size: 12px; padding: 6px 12px; }
+
+  /* Compare table */
+  .compare-table th, .compare-table td { padding: 6px 8px; font-size: 11px; }
+  .bar { max-width: 60px !important; }
+
+  /* Modal */
+  .modal { width: calc(100vw - 1.5rem) !important; padding: 1.25rem; }
+  .modal h3 { font-size: 15px; }
+  .modal-option { padding: 8px 10px; font-size: 13px; }
+
+  /* Preview table */
+  .preview-table th, .preview-table td { padding: 5px 7px; font-size: 11px; }
   .table-wrap { border-radius: var(--radius-sm); }
+
+  /* Buttons row */
+  #export-btn, #clear-btn { font-size: 11px !important; padding: 6px 10px !important; }
 }
 </style>
 </head>
