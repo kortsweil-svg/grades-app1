@@ -321,6 +321,61 @@ header{
 
 /* colors for avatars */
 .av-colors{--c0:#2563EB;--c1:#059669;--c2:#7C3AED;--c3:#EA580C;--c4:#DB2777;--c5:#0891B2}
+
+/* ── Mobile (iPhone 13 = 390px) ── */
+@media (max-width: 430px) {
+  header { padding: 0 1rem; height: 54px; }
+  .logo-text { font-size: 14px; }
+  .logo-sep, .logo-sub { display: none; }
+  .teacher-pill span { display: none; }
+  .btn-logout { padding: 6px 10px; font-size: 12px; }
+
+  .page { padding: 1rem 0.75rem; }
+
+  .stats { grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1.25rem; }
+  .stat-card { padding: 0.875rem 0.5rem; gap: 8px; flex-direction: column; text-align: center; }
+  .stat-icon { width: 36px; height: 36px; font-size: 16px; }
+  .stat-info .val { font-size: 22px; }
+  .stat-info .lbl { font-size: 10px; }
+
+  .link-box { flex-direction: column; gap: 8px; padding: 1rem; }
+  .link-input { width: 100%; }
+
+  .card { padding: 1rem; margin-bottom: 1rem; border-radius: var(--radius); }
+
+  .add-form { grid-template-columns: 1fr 1fr !important; gap: 8px; }
+  .add-form .field:last-child { grid-column: 1 / -1; }
+  .add-form .field:nth-last-child(2) { grid-column: 1 / -1; }
+
+  .section-header { flex-wrap: wrap; gap: 8px; }
+  .section-title { font-size: 14px; }
+
+  .sr-avatar { width: 30px; height: 30px; font-size: 11px; }
+  .sr-name-text { font-size: 13px; }
+  .sr-key { font-size: 10px; }
+  .sr-grade .grade-big { font-size: 18px; }
+  .sr-edit .grade-input { width: 52px; }
+  .save-btn { padding: 6px 8px; font-size: 11px; }
+  .del-btn { font-size: 12px; padding: 2px 4px; }
+
+  .group-header { font-size: 13px; padding: 0.75rem 0 0.5rem; }
+
+  .modal { width: calc(100vw - 2rem) !important; padding: 1.25rem; }
+  .modal-option { padding: 8px 10px; font-size: 13px; }
+
+  .compare-table th, .compare-table td { padding: 7px 8px; font-size: 12px; }
+  .bar-wrap .bar { max-width: 80px; }
+
+  .class-select { font-size: 12px; padding: 5px 8px; }
+
+  .import-zone { padding: 1rem; }
+  .import-zone h3 { font-size: 14px; }
+  .import-zone p { font-size: 12px; }
+
+  .preview-table th, .preview-table td { padding: 6px 8px; font-size: 11px; }
+
+  .table-wrap { border-radius: var(--radius-sm); }
+}
 </style>
 </head>
 <body>
@@ -699,6 +754,7 @@ async function loadStudents() {
 
 function renderStudents(students) {
   window._allStudents = students;
+  renderCompareTable(students);
   // Build class filter
   const classes = [...new Set(students.map(s=>s.class_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'he'));
   const levels = [...new Set(students.map(s=>s.grade_level).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'he'));
